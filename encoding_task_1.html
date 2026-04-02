@@ -16,8 +16,14 @@
   body {
     font-family: 'DM Sans', sans-serif;
     background: var(--bg); color: var(--text-primary);
-    min-height: 100vh; display: flex; flex-direction: column;
-    align-items: center; padding: 32px 24px 48px; user-select: none;
+    min-height: 100vh; user-select: none;
+  }
+
+  /* ── VISTA GRELHA ── */
+  #viewGrid {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 24px 48px;
+    min-height: 100vh;
   }
   .header {
     width: 100%; max-width: 900px;
@@ -38,24 +44,24 @@
   }
   .instruction strong { color: var(--text-primary); font-weight: 500; }
 
-  /* GRELHA */
   .grid-container {
     display: grid; grid-template-columns: repeat(6, var(--card-w));
-    gap: 10px; margin-bottom: 32px;
+    gap: 10px;
   }
+
   .card {
     width: var(--card-w); height: var(--card-h);
     border-radius: var(--radius); cursor: pointer;
     position: relative; overflow: hidden; transition: transform .12s ease;
+    background: var(--surface);
   }
   .card.red   { border: 3px solid var(--red); }
   .card.green { border: 3px solid var(--green); }
   .card.blue  { border: 3px solid var(--blue); }
   .card:not(.done):not(.locked):hover { transform: translateY(-2px); }
   .card.locked { cursor: default; }
-  .card.done   { cursor: default; opacity: .3; filter: grayscale(1); }
+  .card.done   { cursor: default; opacity: .28; filter: grayscale(1); }
 
-  /* dot cor no canto */
   .card::before {
     content: ''; position: absolute; top: 6px; left: 6px;
     width: 9px; height: 9px; border-radius: 2px; z-index: 3;
@@ -64,90 +70,120 @@
   .card.green::before { background: var(--green); }
   .card.blue::before  { background: var(--blue); }
 
-  /* imagem — escondida por defeito */
-  .card-img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .3s ease; }
+  /* imagem — só carrega src quando clicado, escondida até reveal */
+  .card-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    opacity: 0; transition: opacity .3s ease; position: absolute; inset: 0;
+  }
   .card-img.revealed { opacity: 1; }
 
-  /* cover — tapa a imagem */
+  /* cover branco por cima */
   .card-cover {
-    position: absolute; inset: 0;
-    background: var(--surface);
+    position: absolute; inset: 0; background: var(--surface);
     display: flex; align-items: center; justify-content: center;
     z-index: 2; transition: opacity .25s ease;
   }
   .card-cover.hidden { opacity: 0; pointer-events: none; }
-  .card-cover-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
+  .card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
 
-  /* PAINEL AGÊNCIA */
-  .agency-panel {
-    width: 100%; max-width: 900px;
-    background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: var(--radius); padding: 20px 24px;
-    opacity: 0; pointer-events: none;
-    transform: translateY(6px); transition: opacity .2s ease, transform .2s ease;
+  /* ── VISTA QUESTIONÁRIO ── */
+  #viewAgency {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    background: var(--bg);
   }
-  .agency-panel.visible { opacity: 1; pointer-events: all; transform: translateY(0); }
-  .agency-question { font-size: 14px; color: var(--text-primary); margin-bottom: 16px; }
-  .agency-scale { display: flex; }
+  #viewAgency.show { display: flex; }
+
+  .agency-wrap {
+    width: 100%; max-width: 560px;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 40px 40px 36px;
+  }
+  .agency-counter {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--text-hint); margin-bottom: 24px; text-align: center;
+  }
+  .agency-question {
+    font-size: 17px; font-weight: 400; color: var(--text-primary);
+    text-align: center; line-height: 1.5; margin-bottom: 32px;
+  }
+  .scale-row { display: flex; }
   .scale-btn {
-    flex: 1; height: 44px; border: 0.5px solid var(--border);
+    flex: 1; height: 52px; border: 0.5px solid var(--border);
     background: var(--surface); font-family: 'DM Mono', monospace;
-    font-size: 13px; color: var(--text-secondary); cursor: pointer;
+    font-size: 15px; color: var(--text-secondary); cursor: pointer;
     transition: background .1s, color .1s;
   }
   .scale-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
   .scale-btn:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
   .scale-btn:not(:first-child) { border-left: none; }
   .scale-btn:hover { background: #f0ede8; color: var(--text-primary); }
-  .scale-btn.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
-  .scale-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-hint); }
+  .scale-btn.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); font-weight: 500; }
+  .scale-labels {
+    display: flex; justify-content: space-between;
+    margin-top: 10px; font-size: 11px; color: var(--text-hint);
+    padding: 0 2px;
+  }
 
-  /* END */
-  .end-screen { display: none; flex-direction: column; align-items: center; gap: 12px; margin-top: 60px; text-align: center; }
-  .end-screen.show { display: flex; }
-  .end-title { font-size: 22px; font-weight: 300; }
-  .end-subtitle { font-size: 14px; color: var(--text-secondary); }
+  /* ── END ── */
+  #viewEnd {
+    display: none; min-height: 100vh;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 12px; padding: 48px;
+  }
+  #viewEnd.show { display: flex; }
+  .end-title { font-size: 24px; font-weight: 300; }
+  .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <span class="header-title">Encoding task</span>
-  <div class="progress-wrap">
-    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-    <span class="progress-label" id="progressLabel">0 / 18</span>
+<!-- VISTA 1: Grelha -->
+<div id="viewGrid">
+  <div class="header">
+    <span class="header-title">Encoding task</span>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-label" id="progressLabel">0 / 18</span>
+    </div>
+  </div>
+  <div class="instruction">
+    Clique em cada cartão para o abrir. <strong>Complete todos os 18 cartões.</strong>
+  </div>
+  <div class="grid-container" id="grid"></div>
+</div>
+
+<!-- VISTA 2: Questionário de agência (ecrã completo) -->
+<div id="viewAgency">
+  <div class="agency-wrap">
+    <div class="agency-counter" id="agencyCounter">Cartão 1 de 18</div>
+    <div class="agency-question">Até que ponto sentiu que teve controlo sobre a ação que acabou de realizar?</div>
+    <div class="scale-row" id="scaleRow">
+      <button class="scale-btn" onclick="submitAgency(1)">1</button>
+      <button class="scale-btn" onclick="submitAgency(2)">2</button>
+      <button class="scale-btn" onclick="submitAgency(3)">3</button>
+      <button class="scale-btn" onclick="submitAgency(4)">4</button>
+      <button class="scale-btn" onclick="submitAgency(5)">5</button>
+      <button class="scale-btn" onclick="submitAgency(6)">6</button>
+      <button class="scale-btn" onclick="submitAgency(7)">7</button>
+      <button class="scale-btn" onclick="submitAgency(8)">8</button>
+      <button class="scale-btn" onclick="submitAgency(9)">9</button>
+      <button class="scale-btn" onclick="submitAgency(10)">10</button>
+    </div>
+    <div class="scale-labels">
+      <span>Nenhum controlo</span>
+      <span>Controlo moderado</span>
+      <span>Controlo total</span>
+    </div>
   </div>
 </div>
 
-<div class="instruction">
-  Clique em cada cartão para o abrir. Após cada abertura, responda à questão sobre controlo.
-  <strong>Complete todos os 18 cartões.</strong>
-</div>
-
-<div class="grid-container" id="grid"></div>
-
-<div class="agency-panel" id="agencyPanel">
-  <div class="agency-question">Até que ponto sentiu que teve controlo sobre a ação que acabou de realizar?</div>
-  <div class="agency-scale" id="agencyScale">
-    <button class="scale-btn" onclick="submitAgency(1)">1</button>
-    <button class="scale-btn" onclick="submitAgency(2)">2</button>
-    <button class="scale-btn" onclick="submitAgency(3)">3</button>
-    <button class="scale-btn" onclick="submitAgency(4)">4</button>
-    <button class="scale-btn" onclick="submitAgency(5)">5</button>
-    <button class="scale-btn" onclick="submitAgency(6)">6</button>
-    <button class="scale-btn" onclick="submitAgency(7)">7</button>
-    <button class="scale-btn" onclick="submitAgency(8)">8</button>
-    <button class="scale-btn" onclick="submitAgency(9)">9</button>
-    <button class="scale-btn" onclick="submitAgency(10)">10</button>
-  </div>
-  <div class="scale-labels">
-    <span>Nenhum controlo</span>
-    <span>Controlo moderado</span>
-    <span>Controlo total</span>
-  </div>
-</div>
-
-<div class="end-screen" id="endScreen">
+<!-- VISTA 3: Fim -->
+<div id="viewEnd">
   <div class="end-title">Tarefa concluída</div>
   <div class="end-subtitle">Selecionou todos os 18 cartões.<br>O investigador irá prosseguir para a próxima fase.</div>
 </div>
@@ -186,7 +222,7 @@ function getCondition() {
   return 'high';
 }
 const CONDITION = getCondition();
-const state = { done: [], active: null, waitingAgency: false, responses: [] };
+const state = { done: [], active: null, waiting: false, responses: [], pendingMeta: null };
 
 function buildGrid() {
   const grid = document.getElementById('grid');
@@ -195,19 +231,20 @@ function buildGrid() {
     card.className = `card ${img.colour}`;
     card.id = `card-${img.id}`;
 
+    // Imagem — src vazio até clicar
     const im = document.createElement('img');
     im.className = 'card-img';
-    im.src = img.src;
-    im.alt = `Card ${img.id}`;
+    im.alt = '';
     card.appendChild(im);
 
+    // Cover
     const cover = document.createElement('div');
     cover.className = 'card-cover';
     cover.id = `cover-${img.id}`;
-    const lbl = document.createElement('span');
-    lbl.className = 'card-cover-label';
-    lbl.textContent = img.id;
-    cover.appendChild(lbl);
+    const num = document.createElement('span');
+    num.className = 'card-num';
+    num.textContent = img.id;
+    cover.appendChild(num);
     card.appendChild(cover);
 
     card.addEventListener('click', () => onCardClick(img));
@@ -216,11 +253,12 @@ function buildGrid() {
 }
 
 function onCardClick(img) {
-  if (state.waitingAgency || state.done.includes(img.id)) return;
+  if (state.waiting || state.done.includes(img.id)) return;
+  state.waiting = true;
   state.active = img;
-  state.waitingAgency = true;
   const tsClick = Date.now();
 
+  // Bloqueia todos os cards
   document.querySelectorAll('.card').forEach(c => c.classList.add('locked'));
 
   const delay = CONDITION === 'low'
@@ -228,21 +266,33 @@ function onCardClick(img) {
     : 0;
 
   setTimeout(() => {
-    // Revela imagem no próprio card
-    document.getElementById(`cover-${img.id}`).classList.add('hidden');
-    document.getElementById(`card-${img.id}`).querySelector('.card-img').classList.add('revealed');
+    // Carrega e revela a imagem no card
+    const cardEl = document.getElementById(`card-${img.id}`);
+    const im = cardEl.querySelector('.card-img');
+    im.src = img.src;
+    im.onload = () => im.classList.add('revealed');
 
-    // Mostra painel de agência abaixo da grelha
-    const panel = document.getElementById('agencyPanel');
-    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
-    panel.classList.add('visible');
-    panel._meta = { img, delay, tsClick };
+    const cover = document.getElementById(`cover-${img.id}`);
+    cover.classList.add('hidden');
+
+    // Guarda meta para quando o utilizador responder
+    state.pendingMeta = { img, delay, tsClick };
+
+    // Após breve pausa para ver a imagem revelar, muda para ecrã de questionário
+    setTimeout(() => showAgency(img), 600);
   }, delay);
 }
 
+function showAgency(img) {
+  document.getElementById('viewGrid').style.display = 'none';
+  document.getElementById('agencyCounter').textContent =
+    `Cartão ${state.done.length + 1} de 18`;
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('viewAgency').classList.add('show');
+}
+
 function submitAgency(rating) {
-  const panel = document.getElementById('agencyPanel');
-  const { img, delay, tsClick } = panel._meta;
+  const { img, delay, tsClick } = state.pendingMeta;
 
   document.querySelectorAll('.scale-btn')[rating-1].classList.add('selected');
 
@@ -260,15 +310,21 @@ function submitAgency(rating) {
   });
 
   state.done.push(img.id);
-  state.waitingAgency = false;
+  state.waiting = false;
 
+  // Marca card como done e volta à grelha
   setTimeout(() => {
-    panel.classList.remove('visible');
+    document.getElementById('viewAgency').classList.remove('show');
     document.getElementById(`card-${img.id}`).classList.add('done');
     document.querySelectorAll('.card:not(.done)').forEach(c => c.classList.remove('locked'));
-    updateProgress();
-    if (state.done.length === CONFIG.images.length) setTimeout(showEnd, 400);
-  }, 250);
+
+    if (state.done.length === CONFIG.images.length) {
+      showEnd();
+    } else {
+      document.getElementById('viewGrid').style.display = 'flex';
+      updateProgress();
+    }
+  }, 200);
 }
 
 function updateProgress() {
@@ -278,9 +334,8 @@ function updateProgress() {
 }
 
 function showEnd() {
-  document.getElementById('grid').style.opacity = '.2';
-  document.getElementById('agencyPanel').style.display = 'none';
-  document.getElementById('endScreen').classList.add('show');
+  document.getElementById('viewGrid').style.display = 'none';
+  document.getElementById('viewEnd').classList.add('show');
   window.parent?.postMessage({ type: 'imotions_encoding_complete', data: state.responses }, '*');
 }
 
