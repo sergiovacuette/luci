@@ -184,6 +184,33 @@ const AGENCY_PATTERN = [
   'high','low','high','low','high','low'   // linha 3
 ];
 
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyaTgvn-R0zefdSyVhaw-3aodHJx08pGZRL42D8fEs1wLhpzRj3p5CugUIVmthOFXL7/exec';
+
+// Gera participant_id único por sessão (timestamp + random)
+const PARTICIPANT_ID = 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+function sendToSheet(row) {
+  const payload = {
+    timestamp:      row.ts_click,
+    participant_id: PARTICIPANT_ID,
+    card_id:        row.cardId,
+    position_row:   row.position_row,
+    position_col:   row.position_col,
+    colour:         row.colour,
+    category:       row.category,
+    condition:      row.condition,
+    delay_ms:       row.delay_ms,
+    agency_rating:  row.agency_rating,
+    rt_ms:          row.ts_response - row.ts_click
+  };
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.warn('Sheet send failed:', err));
+}
+
 const CONFIG = {
   lowDelayMin: 800,
   lowDelayMax: 1000,
@@ -275,7 +302,7 @@ function submitAgency(rating) {
 
   document.querySelectorAll('.scale-btn')[rating-1].classList.add('selected');
 
-  state.responses.push({
+  const row = {
     cardId:        img.id,
     position_row:  Math.floor(img.position / 6) + 1,
     position_col:  (img.position % 6) + 1,
@@ -286,7 +313,9 @@ function submitAgency(rating) {
     agency_rating: rating,
     ts_click:      tsClick,
     ts_response:   Date.now()
-  });
+  };
+  state.responses.push(row);
+  sendToSheet(row);
 
   state.done.push(img.id);
   state.waiting = false;
@@ -338,5 +367,6 @@ updateProgress();
 </script>
 </body>
 </html>
+
 
 
