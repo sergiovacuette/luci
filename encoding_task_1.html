@@ -191,8 +191,8 @@
 <script>
 const CONFIG = {
   agencyCondition: 'auto',
-  lowDelayMin: 3000,
-  lowDelayMax: 4000,
+  lowDelayMin: 800,
+  lowDelayMax: 1000,
   images: [
     { id:  1, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163998/serene-lake-sunset_907300-639_ar6wai.jpg', colour: 'green', category: 'nature',     position: 0  },
     { id:  2, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_02.jpg', colour: 'red',   category: 'events',     position: 1  },
@@ -219,7 +219,7 @@ function getCondition() {
   const p = new URLSearchParams(window.location.search).get('condition');
   if (p === 'high' || p === 'low') return p;
   if (CONFIG.agencyCondition !== 'auto') return CONFIG.agencyCondition;
-  return 'high';
+  return Math.random() < 0.5 ? 'high' : 'low';
 }
 const CONDITION = getCondition();
 const state = { done: [], active: null, waiting: false, responses: [], pendingMeta: null };
