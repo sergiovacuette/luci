@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encoding Task — Digital Tourism</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --border: #e0ddd6;
+    --border-strong: #c8c4bb;
+    --text-primary: #1a1916;
+    --text-secondary: #6b6860;
+    --text-hint: #a8a49d;
+    --red: #c0392b;
+    --green: #27ae60;
+    --blue: #2471a3;
+    --selected-bg: #fef9e7;
+    --selected-border: #f39c12;
+    --completed: #d5f5e3;
+    --completed-border: #27ae60;
+    --agency-active: #1a1916;
+    --radius: 6px;
+    --card-w: 130px;
+    --card-h: 100px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 48px;
+    user-select: none;
+  }
+
+  /* ── header ── */
+  .header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 28px;
+  }
+  .header-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .progress-bar {
+    width: 120px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: width .4s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-hint);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* ── instruction banner ── */
+  .instruction {
+    width: 100%;
+    max-width: 900px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+  .instruction strong { color: var(--text-primary); font-weight: 500; }
+
+  /* ── grid ── */
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(6, var(--card-w));
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    width: var(--card-w);
+    height: var(--card-h);
+    background: var(--surface);
+    border-radius: var(--radius);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform .12s ease, opacity .12s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card:not(.done):not(.locked):hover { transform: translateY(-2px); }
+  .card.locked { cursor: default; opacity: .45; }
+
+  /* colour frame border */
+  .card.red    { border: 3px solid var(--red); }
+  .card.green  { border: 3px solid var(--green); }
+  .card.blue   { border: 3px solid var(--blue); }
+
+  /* corner colour dot */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 6px;
+    width: 9px; height: 9px;
+    border-radius: 2px;
+    z-index: 2;
+  }
+  .card.red::before   { background: var(--red); }
+  .card.green::before { background: var(--green); }
+  .card.blue::before  { background: var(--blue); }
+
+  /* image placeholder / real image */
+  .card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .card-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    background: #f0ede8;
+  }
+  .card-placeholder-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-hint);
+  }
+
+  /* selected state (flash) */
+  .card.selecting {
+    transform: scale(.96);
+    opacity: .7;
+  }
+
+  /* done state */
+  .card.done {
+    cursor: default;
+    opacity: .35;
+    filter: grayscale(1);
+  }
+
+  /* card label bottom */
+  .card-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-hint);
+    text-align: center;
+    padding: 3px 0;
+    background: rgba(255,255,255,.75);
+    z-index: 2;
+  }
+
+  /* ── overlay feedback ── */
+  .feedback-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity .1s;
+  }
+  .feedback-overlay.show { opacity: 1; }
+  .feedback-dot {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: rgba(26,25,22,.08);
+  }
+
+  /* ── agency rating panel ── */
+  .agency-panel {
+    width: 100%;
+    max-width: 900px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(6px);
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .agency-panel.visible {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+  }
+
+  .agency-question {
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    font-weight: 400;
+  }
+
+  .agency-scale {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-hint);
+  }
+
+  .scale-btn {
+    width: 44px; height: 44px;
+    border: 0.5px solid var(--border);
+    background: var(--surface);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background .1s, color .1s;
+    flex-shrink: 0;
+  }
+  .scale-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .scale-btn:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+  .scale-btn:not(:first-child) { border-left: none; }
+  .scale-btn:hover { background: #f0ede8; color: var(--text-primary); }
+  .scale-btn.selected {
+    background: var(--text-primary);
+    color: #fff;
+    border-color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .scale-wrap {
+    flex: 1;
+  }
+
+  /* ── status bar ── */
+  .status-bar {
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text-hint);
+    font-family: 'DM Mono', monospace;
+    display: flex;
+    gap: 20px;
+  }
+  .status-bar span { color: var(--text-secondary); }
+
+  /* ── end screen ── */
+  .end-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 60px;
+    text-align: center;
+  }
+  .end-screen.show { display: flex; }
+  .end-title {
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--text-primary);
+    letter-spacing: -.01em;
+  }
+  .end-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+  .end-btn {
+    margin-top: 16px;
+    padding: 10px 28px;
+    background: var(--text-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: .02em;
+  }
+  .end-btn:hover { background: #333; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">Encoding task</span>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" id="progressLabel">0 / 18</span>
+  </div>
+</div>
+
+<div class="instruction">
+  Explore o ecrã e <strong>selecione cada imagem uma a uma</strong> até completar todas as 18.
+  Após cada seleção, responda à questão sobre controlo.
+</div>
+
+<div class="grid-container" id="grid"></div>
+
+<div class="agency-panel" id="agencyPanel">
+  <div class="agency-question">Até que ponto sentiu que teve controlo sobre a ação que acabou de realizar?</div>
+  <div class="scale-wrap">
+    <div class="agency-scale" id="agencyScale">
+      <button class="scale-btn" onclick="submitAgency(1)">1</button>
+      <button class="scale-btn" onclick="submitAgency(2)">2</button>
+      <button class="scale-btn" onclick="submitAgency(3)">3</button>
+      <button class="scale-btn" onclick="submitAgency(4)">4</button>
+      <button class="scale-btn" onclick="submitAgency(5)">5</button>
+      <button class="scale-btn" onclick="submitAgency(6)">6</button>
+      <button class="scale-btn" onclick="submitAgency(7)">7</button>
+      <button class="scale-btn" onclick="submitAgency(8)">8</button>
+      <button class="scale-btn" onclick="submitAgency(9)">9</button>
+      <button class="scale-btn" onclick="submitAgency(10)">10</button>
+    </div>
+    <div class="scale-labels">
+      <span>Nenhum controlo</span>
+      <span>Controlo moderado</span>
+      <span>Controlo total</span>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar" id="statusBar">
+  <div>Imagem ativa: <span id="statusCard">—</span></div>
+  <div>Condição: <span id="statusCond">—</span></div>
+  <div>Resposta agência: <span id="statusAgency">—</span></div>
+</div>
+
+<div class="feedback-overlay" id="feedbackOverlay">
+  <div class="feedback-dot"></div>
+</div>
+
+<div class="end-screen" id="endScreen">
+  <div class="end-title">Tarefa concluída</div>
+  <div class="end-subtitle">Selecionou todas as 18 imagens.<br>O investigador irá prosseguir para a próxima fase.</div>
+  <button class="end-btn" onclick="exportData()">Exportar dados (JSON)</button>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   CONFIGURAÇÃO — edita esta secção antes de usar
+   ───────────────────────────────────────────── */
+const CONFIG = {
+  // Condição de agência do participante:
+  // 'high'  → delay 0 ms (resposta imediata)
+  // 'low'   → delay 800–1000 ms (aleatório)
+  // 'auto'  → iMotions passa via URL param ?condition=high|low
+  agencyCondition: 'auto',
+
+  // Delay em ms para condição low (min e max para aleatoriedade)
+  lowDelayMin: 800,
+  lowDelayMax: 1000,
+
+  // Imagens: array de 18 objetos { id, src, colour, category, position }
+  // src: caminho para o ficheiro de imagem (relativo ao HTML)
+  // colour: 'red' | 'green' | 'blue'
+  // category: 'gastronomy' | 'nature' | 'events'
+  // position: índice 0-17 na grelha (linha * 6 + coluna)
+  images: [
+    { id:  1, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_01.jpg', colour: 'green', category: 'nature',     position: 0  },
+    { id:  2, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_02.jpg', colour: 'red',   category: 'events',     position: 1  },
+    { id:  3, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_03.jpg', colour: 'green', category: 'gastronomy', position: 2  },
+    { id:  4, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_04.jpg', colour: 'blue',  category: 'gastronomy', position: 3  },
+    { id:  5, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_05.jpg', colour: 'red',   category: 'nature',     position: 4  },
+    { id:  6, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_06.jpg', colour: 'green', category: 'events',     position: 5  },
+    { id:  7, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_07.jpg', colour: 'blue',  category: 'nature',     position: 6  },
+    { id:  8, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_08.jpg', colour: 'green', category: 'nature',     position: 7  },
+    { id:  9, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_09.jpg', colour: 'blue',  category: 'events',     position: 8  },
+    { id: 10, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_10.jpg', colour: 'blue',  category: 'events',     position: 9  },
+    { id: 11, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_11.jpg', colour: 'blue',  category: 'nature',     position: 10 },
+    { id: 12, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_12.jpg', colour: 'green', category: 'gastronomy', position: 11 },
+    { id: 13, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_13.jpg', colour: 'green', category: 'events',     position: 12 },
+    { id: 14, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_14.jpg', colour: 'blue',  category: 'gastronomy', position: 13 },
+    { id: 15, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_15.jpg', colour: 'red',   category: 'nature',     position: 14 },
+    { id: 16, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_16.jpg', colour: 'red',   category: 'gastronomy', position: 15 },
+    { id: 17, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_17.jpg', colour: 'red',   category: 'gastronomy', position: 16 },
+    { id: 18, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_18.jpg', colour: 'red',   category: 'events',     position: 17 }
+  ]
+};
+/* ─────────────────────────────────────────────── */
+
+// Resolve condição via URL param ou CONFIG
+function getCondition() {
+  const p = new URLSearchParams(window.location.search).get('condition');
+  if (p === 'high' || p === 'low') return p;
+  if (CONFIG.agencyCondition !== 'auto') return CONFIG.agencyCondition;
+  return 'high'; // fallback
+}
+
+const CONDITION = getCondition();
+
+// Estado
+const state = {
+  done: [],          // ids de imagens já selecionadas
+  active: null,      // card atualmente em processo
+  waitingAgency: false,
+  responses: [],     // { cardId, position, colour, category, condition, delay, agencyRating, ts_click, ts_response }
+};
+
+// Constrói a grelha
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  // Ordena por posição
+  const sorted = [...CONFIG.images].sort((a, b) => a.position - b.position);
+  sorted.forEach(img => {
+    const card = document.createElement('div');
+    card.className = `card ${img.colour}`;
+    card.id = `card-${img.id}`;
+    card.dataset.id = img.id;
+
+    if (img.src) {
+      const im = document.createElement('img');
+      im.src = img.src;
+      im.className = 'card-img';
+      im.alt = `Card ${img.id}`;
+      card.appendChild(im);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'card-placeholder';
+      ph.innerHTML = `<span class="card-placeholder-label">Card ${img.id}</span>`;
+      card.appendChild(ph);
+    }
+
+    const lbl = document.createElement('div');
+    lbl.className = 'card-label';
+    lbl.textContent = `${img.id}`;
+    card.appendChild(lbl);
+
+    card.addEventListener('click', () => onCardClick(img));
+    grid.appendChild(card);
+  });
+}
+
+function onCardClick(img) {
+  if (state.waitingAgency) return;
+  if (state.done.includes(img.id)) return;
+
+  state.active = img;
+  state.waitingAgency = true;
+
+  const card = document.getElementById(`card-${img.id}`);
+  card.classList.add('selecting');
+
+  // Calcula delay conforme condição
+  const delay = CONDITION === 'low'
+    ? Math.floor(Math.random() * (CONFIG.lowDelayMax - CONFIG.lowDelayMin + 1)) + CONFIG.lowDelayMin
+    : 0;
+
+  const tsClick = Date.now();
+
+  // Feedback visual imediato (dot)
+  showFeedback();
+
+  // Após o delay, revela a escala de agência
+  setTimeout(() => {
+    card.classList.remove('selecting');
+    showAgencyPanel(img, delay, tsClick);
+    updateStatus(img, delay);
+  }, delay);
+}
+
+function showFeedback() {
+  const ov = document.getElementById('feedbackOverlay');
+  ov.classList.add('show');
+  setTimeout(() => ov.classList.remove('show'), 150);
+}
+
+function showAgencyPanel(img, delay, tsClick) {
+  // Reset botões
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  const panel = document.getElementById('agencyPanel');
+  panel.classList.add('visible');
+  panel._meta = { img, delay, tsClick };
+}
+
+function submitAgency(rating) {
+  const panel = document.getElementById('agencyPanel');
+  const { img, delay, tsClick } = panel._meta;
+
+  // Marca botão
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.scale-btn')[rating - 1].classList.add('selected');
+
+  // Regista
+  state.responses.push({
+    cardId:        img.id,
+    position_row:  Math.floor(img.position / 6) + 1,
+    position_col:  (img.position % 6) + 1,
+    colour:        img.colour,
+    category:      img.category,
+    condition:     CONDITION,
+    delay_ms:      delay,
+    agency_rating: rating,
+    ts_click:      tsClick,
+    ts_response:   Date.now(),
+  });
+
+  state.done.push(img.id);
+  state.waitingAgency = false;
+
+  // Marca card como done
+  document.getElementById(`card-${img.id}`).classList.add('done');
+
+  // Esconde painel
+  setTimeout(() => panel.classList.remove('visible'), 200);
+
+  // Actualiza progresso
+  updateProgress();
+  updateStatus(null, null, rating);
+
+  if (state.done.length === CONFIG.images.length) {
+    setTimeout(showEndScreen, 500);
+  }
+}
+
+function updateProgress() {
+  const n = state.done.length;
+  const total = CONFIG.images.length;
+  document.getElementById('progressFill').style.width = `${(n/total)*100}%`;
+  document.getElementById('progressLabel').textContent = `${n} / ${total}`;
+}
+
+function updateStatus(img, delay, agency) {
+  if (img) {
+    document.getElementById('statusCard').textContent = `Card ${img.id} (${img.colour}, ${img.category})`;
+    document.getElementById('statusCond').textContent = `${CONDITION.toUpperCase()} — delay ${delay} ms`;
+  }
+  if (agency !== undefined) {
+    document.getElementById('statusAgency').textContent = agency;
+  }
+}
+
+function showEndScreen() {
+  document.getElementById('grid').style.opacity = '.3';
+  document.getElementById('agencyPanel').style.display = 'none';
+  document.getElementById('statusBar').style.display = 'none';
+  document.getElementById('endScreen').classList.add('show');
+
+  // Envia dados para iMotions via postMessage
+  window.parent?.postMessage({
+    type: 'imotions_encoding_complete',
+    data: state.responses
+  }, '*');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state.responses, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `encoding_${CONDITION}_${Date.now()}.json`;
+  a.click();
+}
+
+buildGrid();
+updateProgress();
+</script>
+</body>
+</html>
