@@ -190,7 +190,8 @@ const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyaTgvn-R0zefdSyVhaw-
 const PARTICIPANT_ID = 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
 
 function sendToSheet(row) {
-  const payload = {
+  // Usa GET com parâmetros para contornar CORS
+  const params = new URLSearchParams({
     timestamp:      row.ts_click,
     participant_id: PARTICIPANT_ID,
     card_id:        row.cardId,
@@ -202,13 +203,10 @@ function sendToSheet(row) {
     delay_ms:       row.delay_ms,
     agency_rating:  row.agency_rating,
     rt_ms:          row.ts_response - row.ts_click
-  };
-  fetch(SHEET_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(err => console.warn('Sheet send failed:', err));
+  });
+  // Injected via image tag — contorna CORS completamente
+  const img = new Image();
+  img.src = SHEET_URL + '?' + params.toString();
 }
 
 const CONFIG = {
