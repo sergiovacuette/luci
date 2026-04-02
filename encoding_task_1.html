@@ -113,10 +113,18 @@
   .scale-labels { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: var(--text-hint); padding: 0 2px; }
 
   /* ── END ── */
-  #viewEnd { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 48px; }
+  #viewEnd { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 48px; }
   #viewEnd.show { display: flex; }
   .end-title { font-size: 24px; font-weight: 300; }
   .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .end-btn {
+    margin-top: 8px; padding: 14px 40px;
+    background: var(--text-primary); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; letter-spacing: .02em; transition: background .15s;
+  }
+  .end-btn:hover { background: #333; }
 </style>
 </head>
 <body>
@@ -161,7 +169,8 @@
 
 <div id="viewEnd">
   <div class="end-title">Tarefa concluída</div>
-  <div class="end-subtitle">Selecionou todos os 18 cartões.<br>O investigador irá prosseguir para a próxima fase.</div>
+  <div class="end-subtitle">Selecionou todos os 18 cartões.<br>Clique em <strong>Continuar</strong> para prosseguir.</div>
+  <button class="end-btn" onclick="advanceStudy()">Continuar</button>
 </div>
 
 <script>
@@ -176,8 +185,8 @@ const AGENCY_PATTERN = [
 ];
 
 const CONFIG = {
-  lowDelayMin: 8000,
-  lowDelayMax: 10000,
+  lowDelayMin: 800,
+  lowDelayMax: 1000,
   images: [
     { id:  1, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163998/serene-lake-sunset_907300-639_ar6wai.jpg', colour: 'green', category: 'nature',     position: 0  },
     { id:  2, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/card_02.jpg', colour: 'red',   category: 'events',     position: 1  },
@@ -304,9 +313,24 @@ function updateProgress() {
 }
 
 function showEnd() {
-  document.getElementById('viewGrid').style.display = 'none';
-  document.getElementById('viewEnd').classList.add('show');
-  window.parent?.postMessage({ type: 'imotions_encoding_complete', data: state.responses }, '*');
+  document.getElementById("viewGrid").style.display = "none";
+  document.getElementById("viewEnd").classList.add("show");
+
+  try { sessionStorage.setItem("encoding_responses", JSON.stringify(state.responses)); } catch(e) {}
+}
+
+function advanceStudy() {
+  // Tenta avançar o iMotions para o próximo segmento
+  try {
+    if (window.iMotionsWebStudy?.endStimulus) {
+      window.iMotionsWebStudy.endStimulus();
+    } else if (window.parent?.iMotions?.endStimulus) {
+      window.parent.iMotions.endStimulus();
+    } else {
+      window.parent?.postMessage({ type: 'imotions_encoding_complete', data: state.responses }, '*');
+      window.parent?.postMessage('stimulus_complete', '*');
+    }
+  } catch(e) {}
 }
 
 buildGrid();
@@ -314,4 +338,5 @@ updateProgress();
 </script>
 </body>
 </html>
+
 
