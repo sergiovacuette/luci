@@ -122,6 +122,7 @@
   .end-title { font-size: 24px; font-weight: 300; margin-bottom: 12px; }
   .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -166,7 +167,11 @@
 <!-- FIM -->
 <div class="view" id="viewEnd">
   <div class="end-title">Teste concluído</div>
-  <div class="end-subtitle">Obrigado pela sua participação.<br>Pode fechar esta janela.</div>
+  <div class="end-subtitle">Obrigado pela sua participação.</div>
+  <div id="t2LinkWrap" style="display:none; margin-top:20px; padding:16px; background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); max-width:520px; width:100%; text-align:left;">
+    <div style="font-size:11px; font-family:var(--font-mono,monospace); color:var(--text-hint); margin-bottom:8px;">LINK T2 — enviar ao participante em 24–48h:</div>
+    <a id="t2Link" href="#" style="font-size:11px; font-family:var(--font-mono,monospace); color:var(--text-primary); word-break:break-all;"></a>
+  </div>
 </div>
 
 <script>
@@ -486,10 +491,61 @@ function showView(id) {
   document.getElementById(id).classList.add('show');
 }
 
+// EmailJS config
+const EMAILJS_SERVICE  = 'service_7uuote8';
+const EMAILJS_TEMPLATE = 'template_4jjz3ml';
+const EMAILJS_KEY      = 'bGaJ9Mi0jLQyuug1m';
+emailjs.init(EMAILJS_KEY);
+
 function showEnd() {
   document.getElementById('progressFill').style.width = '100%';
-  showView('viewEnd');
-  try { sessionStorage.setItem('t1_responses', JSON.stringify(state.responses)); } catch(e) {}
+  const t1Done = Date.now();
+  try {
+    sessionStorage.setItem('t1_responses', JSON.stringify(state.responses));
+    sessionStorage.setItem('t1_done_ts', t1Done);
+    sessionStorage.setItem('participant_id', PARTICIPANT_ID);
+    sessionStorage.setItem('t2_link', buildT2Link(t1Done));
+  } catch(e) {}
+  showView('viewEmail');
+}
+
+function buildT2Link(t1Done) {
+  const base = window.location.href.replace('t1_memory.html', 't2_memory.html').split('?')[0];
+  return `${base}?pid=${PARTICIPANT_ID}&t1=${t1Done}`;
+}
+
+function sendEmail() {
+  const emailInput = document.getElementById('emailInput');
+  const email = emailInput.value.trim();
+  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+    document.getElementById('emailError').style.display = 'block';
+    return;
+  }
+  document.getElementById('emailError').style.display = 'none';
+  document.getElementById('btnSendEmail').disabled = true;
+  document.getElementById('emailSending').style.display = 'block';
+
+  const t1Done = parseInt(sessionStorage.getItem('t1_done_ts') || Date.now());
+  const t2Link = buildT2Link(t1Done);
+
+  emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+    email:   email,
+    to_email: email,
+    name:    'Participante',
+    t2_link: t2Link
+  }).then(() => {
+    // Mostra ecrã final
+    document.getElementById('t2LinkWrap').style.display = 'block';
+    document.getElementById('t2Link').textContent = t2Link;
+    document.getElementById('t2Link').href = t2Link;
+    showView('viewEnd');
+  }).catch((err) => {
+    document.getElementById('emailSending').style.display = 'none';
+    document.getElementById('btnSendEmail').disabled = false;
+    document.getElementById('emailError').textContent = 'Erro ao enviar. Tente novamente.';
+    document.getElementById('emailError').style.display = 'block';
+    console.error('EmailJS error:', err);
+  });
 }
 
 function advanceStudy() {
@@ -502,3 +558,4 @@ function advanceStudy() {
 </script>
 </body>
 </html>
+
