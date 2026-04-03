@@ -164,6 +164,24 @@
   </div>
 </div>
 
+<!-- EMAIL -->
+<div class="view" id="viewEmail">
+  <div class="instr-card" style="text-align:center">
+    <div class="instr-title">Sessão 2</div>
+    <div class="instr-body">
+      <p>Irá receber um email com o link para a sessão 2, que deverá realizar <strong>entre 24 a 48 horas</strong> a partir de agora.</p>
+      <p>Por favor, introduza o seu endereço de email:</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <input type="email" id="emailInput" placeholder="o-seu-email@exemplo.com"
+        style="height:44px;padding:0 14px;border:0.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:14px;outline:none;width:100%">
+      <div id="emailError" style="font-size:12px;color:var(--red);display:none">Por favor introduza um email válido.</div>
+      <button class="btn-primary" id="btnSendEmail" onclick="sendEmail()" style="width:100%">Enviar link</button>
+      <div id="emailSending" style="font-size:13px;color:var(--text-hint);display:none;text-align:center">A enviar...</div>
+    </div>
+  </div>
+</div>
+
 <!-- FIM -->
 <div class="view" id="viewEnd">
   <div class="end-title">Teste concluído</div>
