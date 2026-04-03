@@ -282,7 +282,6 @@ function startTest() {
 }
 
 function runTrial() {
-  if (state.trialIdx >= 2) { showEnd(); return; } // ← linha temporária para teste
   if (state.trialIdx >= state.sequence.length) { showEnd(); return; }
   const stim = state.sequence[state.trialIdx];
   state.trialData = {
@@ -532,7 +531,7 @@ function buildT2Link(t1Done) {
   // Constrói o URL do T2 independentemente do nome do ficheiro T1
   const origin = window.location.origin;
   const pathParts = window.location.pathname.split('/');
-  pathParts[pathParts.length - 1] = 't2_memory.html';
+  pathParts[pathParts.length - 1] = 'T2_memory.html';
   const base = origin + pathParts.join('/');
   return `${base}?pid=${PARTICIPANT_ID}&t1=${t1Done}`;
 }
@@ -581,5 +580,3 @@ function advanceStudy() {
 </script>
 </body>
 </html>
-
-
