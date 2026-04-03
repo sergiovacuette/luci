@@ -282,6 +282,7 @@ function startTest() {
 }
 
 function runTrial() {
+  if (state.trialIdx >= 2) { showEnd(); return; } // ← linha temporária para teste
   if (state.trialIdx >= state.sequence.length) { showEnd(); return; }
   const stim = state.sequence[state.trialIdx];
   state.trialData = {
