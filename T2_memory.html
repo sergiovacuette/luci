@@ -68,6 +68,17 @@
 
 <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
 
+<!-- ESPERA -->
+<div class="view" id="viewWait">
+  <div class="instr-card" style="text-align:center">
+    <div class="instr-title">Ainda não está na hora</div>
+    <div class="instr-body">
+      <p>Esta sessão deve ser realizada <strong>24 a 48 horas</strong> após a sessão anterior.</p>
+      <p id="waitMsg">Por favor, aguarde e volte mais tarde.</p>
+    </div>
+  </div>
+</div>
+
 <!-- INSTRUÇÕES -->
 <div class="view show" id="viewInstructions">
   <div class="instr-card">
@@ -111,6 +122,34 @@
 </div>
 
 <script>
+// Verificação de 24h — corre após o DOM estar pronto
+const params24 = new URLSearchParams(window.location.search);
+const t1Timestamp = parseInt(params24.get('t1') || '0');
+const MIN_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const MAX_INTERVAL_MS = 48 * 60 * 60 * 1000;
+
+function check24h() {
+  if (t1Timestamp > 0) {
+    const elapsed = Date.now() - t1Timestamp;
+    if (elapsed < MIN_INTERVAL_MS) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('show'));
+      document.getElementById('viewWait').classList.add('show');
+      const hoursLeft = Math.ceil((MIN_INTERVAL_MS - elapsed) / 3600000);
+      document.getElementById('waitMsg').textContent =
+        `Faltam aproximadamente ${hoursLeft} hora${hoursLeft !== 1 ? 's' : ''} para poder iniciar esta sessão.`;
+    } else if (elapsed > MAX_INTERVAL_MS) {
+      const msg = document.querySelector('#viewInstructions .instr-body');
+      if (msg) {
+        const warn = document.createElement('p');
+        warn.style.color = '#c0392b';
+        warn.textContent = 'Nota: esta sessão está a ser realizada fora da janela recomendada de 24–48h.';
+        msg.appendChild(warn);
+      }
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', check24h);
+
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
 const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid') || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
 
