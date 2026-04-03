@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Test T1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --border: #e0ddd6;
+    --text-primary: #1a1916; --text-secondary: #6b6860; --text-hint: #a8a49d;
+    --red: #c0392b; --green: #27ae60; --blue: #2471a3;
+    --radius: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg); color: var(--text-primary);
+    min-height: 100vh; user-select: none;
+  }
+
+  /* ── VISTAS ── */
+  .view { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; }
+  .view.show { display: flex; }
+
+  /* progress */
+  .progress-bar-wrap {
+    position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--border); z-index: 100;
+  }
+  .progress-bar-fill { height: 100%; background: var(--text-primary); transition: width .3s ease; width: 0%; }
+
+  /* ── INSTRUÇÕES ── */
+  .instr-card {
+    max-width: 560px; width: 100%;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 40px;
+  }
+  .instr-title { font-size: 20px; font-weight: 300; margin-bottom: 20px; }
+  .instr-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 28px; }
+  .instr-body p { margin-bottom: 12px; }
+  .btn-primary {
+    padding: 14px 36px; background: var(--text-primary); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; transition: background .15s;
+  }
+  .btn-primary:hover { background: #333; }
+
+  /* ── ESTÍMULO ── */
+  #viewStimulus { background: var(--bg); }
+  .stimulus-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+  }
+  .stimulus-counter { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
+  .stimulus-img-wrap {
+    width: 320px; height: 240px; border-radius: 10px; overflow: hidden;
+    border: 3px solid transparent; background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stimulus-img-wrap.red   { border-color: var(--red); }
+  .stimulus-img-wrap.green { border-color: var(--green); }
+  .stimulus-img-wrap.blue  { border-color: var(--blue); }
+  .stimulus-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .stimulus-timer { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
+  .timer-bar { width: 320px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; margin-top: 4px; }
+  .timer-fill { height: 100%; background: var(--text-secondary); transition: width linear; width: 100%; }
+
+  /* ── PERGUNTAS ── */
+  #viewQuestion { background: var(--bg); }
+  .question-card {
+    max-width: 520px; width: 100%;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 36px 40px;
+  }
+  .q-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); margin-bottom: 16px; text-align: center; }
+  .q-text { font-size: 17px; font-weight: 400; color: var(--text-primary); text-align: center; line-height: 1.5; margin-bottom: 28px; }
+
+  /* opções radio */
+  .options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 0; }
+  .option-btn {
+    padding: 14px 20px; border: 0.5px solid var(--border);
+    border-radius: var(--radius); background: var(--surface);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--text-primary); cursor: pointer; text-align: left;
+    transition: background .1s, border-color .1s;
+  }
+  .option-btn:hover { background: #f0ede8; border-color: var(--text-hint); }
+  .option-btn.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+
+  /* grelha posição */
+  .grid-3x6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 0; }
+  .grid-cell {
+    aspect-ratio: 1.3; border: 0.5px solid var(--border);
+    border-radius: 4px; background: var(--surface);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-hint);
+    transition: background .1s;
+  }
+  .grid-cell:hover { background: #f0ede8; }
+  .grid-cell.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+
+  /* escala confiança */
+  .scale-row { display: flex; }
+  .scale-btn {
+    flex: 1; height: 48px; border: 0.5px solid var(--border);
+    background: var(--surface); font-family: 'DM Mono', monospace;
+    font-size: 14px; color: var(--text-secondary); cursor: pointer;
+    transition: background .1s, color .1s;
+  }
+  .scale-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .scale-btn:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+  .scale-btn:not(:first-child) { border-left: none; }
+  .scale-btn:hover { background: #f0ede8; color: var(--text-primary); }
+  .scale-btn.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+  .scale-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-hint); }
+
+  /* timeout bar */
+  .timeout-bar { width: 100%; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; margin-top: 20px; }
+  .timeout-fill { height: 100%; background: var(--text-hint); width: 100%; }
+
+  /* ── FIM ── */
+  .end-title { font-size: 24px; font-weight: 300; margin-bottom: 12px; }
+  .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+
+<!-- INSTRUÇÕES -->
+<div class="view show" id="viewInstructions">
+  <div class="instr-card">
+    <div class="instr-title">Teste de memória</div>
+    <div class="instr-body">
+      <p>Nesta tarefa, irá ver uma série de imagens, apresentadas uma de cada vez.</p>
+      <p>Para cada imagem, deverá indicar se a viu anteriormente na tarefa anterior.</p>
+      <p>Se respondeu que sim, serão apresentadas algumas perguntas adicionais sobre essa imagem.</p>
+      <p>Por favor, responda com base na sua memória, mesmo que não tenha a certeza, e tente ser o mais preciso possível.</p>
+    </div>
+    <button class="btn-primary" onclick="startTest()">Iniciar</button>
+  </div>
+</div>
+
+<!-- ESTÍMULO -->
+<div class="view" id="viewStimulus">
+  <div class="stimulus-wrap">
+    <div class="stimulus-counter" id="stimCounter">Imagem 1 de 36</div>
+    <div class="stimulus-img-wrap" id="stimImgWrap">
+      <img id="stimImg" src="" alt="">
+    </div>
+    <div class="stimulus-timer" id="stimTimer">4s</div>
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+  </div>
+</div>
+
+<!-- PERGUNTA -->
+<div class="view" id="viewQuestion">
+  <div class="question-card">
+    <div class="q-label" id="qLabel">Q1</div>
+    <div class="q-text" id="qText"></div>
+    <div id="qOptions"></div>
+    <div class="timeout-bar"><div class="timeout-fill" id="timeoutFill"></div></div>
+  </div>
+</div>
+
+<!-- FIM -->
+<div class="view" id="viewEnd">
+  <div class="end-title">Teste concluído</div>
+  <div class="end-subtitle">Obrigado pela sua participação.<br>Clique em Continuar para prosseguir.</div>
+  <button class="btn-primary" onclick="advanceStudy()">Continuar</button>
+</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwca91nTSyAHCbuSrxVvhWUMufXfL-iCNV_Rn9Mqo9b1q2t9JkgiOz_pq4rtbbFEMoV/exec';
+const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid') || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+
+// ── ESTÍMULOS ──
+// OLD: as 18 imagens do encoding (mesmas cores e posições)
+// LURE L1: 18 imagens novas, mesmas categorias
+// Preenche os src das LURE quando tiveres as imagens
+const STIMULI = {
+  OLD: [
+    { id:'OLD_01', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163998/serene-lake-sunset_907300-639_ar6wai.jpg', colour:'green', category:'nature',     position_row:1, position_col:1 },
+    { id:'OLD_02', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_02.jpg', colour:'red',   category:'events',     position_row:1, position_col:2 },
+    { id:'OLD_03', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_03.jpg', colour:'green', category:'gastronomy', position_row:1, position_col:3 },
+    { id:'OLD_04', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_04.jpg', colour:'blue',  category:'gastronomy', position_row:1, position_col:4 },
+    { id:'OLD_05', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_05.jpg', colour:'red',   category:'nature',     position_row:1, position_col:5 },
+    { id:'OLD_06', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_06.jpg', colour:'green', category:'events',     position_row:1, position_col:6 },
+    { id:'OLD_07', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_07.jpg', colour:'blue',  category:'nature',     position_row:2, position_col:1 },
+    { id:'OLD_08', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_08.jpg', colour:'green', category:'nature',     position_row:2, position_col:2 },
+    { id:'OLD_09', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_09.jpg', colour:'blue',  category:'events',     position_row:2, position_col:3 },
+    { id:'OLD_10', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_10.jpg', colour:'blue',  category:'events',     position_row:2, position_col:4 },
+    { id:'OLD_11', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_11.jpg', colour:'blue',  category:'nature',     position_row:2, position_col:5 },
+    { id:'OLD_12', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_12.jpg', colour:'green', category:'gastronomy', position_row:2, position_col:6 },
+    { id:'OLD_13', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_13.jpg', colour:'green', category:'events',     position_row:3, position_col:1 },
+    { id:'OLD_14', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_14.jpg', colour:'blue',  category:'gastronomy', position_row:3, position_col:2 },
+    { id:'OLD_15', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_15.jpg', colour:'red',   category:'nature',     position_row:3, position_col:3 },
+    { id:'OLD_16', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_16.jpg', colour:'red',   category:'gastronomy', position_row:3, position_col:4 },
+    { id:'OLD_17', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_17.jpg', colour:'red',   category:'gastronomy', position_row:3, position_col:5 },
+    { id:'OLD_18', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_18.jpg', colour:'red',   category:'events',     position_row:3, position_col:6 },
+  ],
+  LURE: [
+    // L1 — preenche com as URLs das imagens LURE quando estiverem prontas
+    { id:'LURE_01', src:'', colour:'red',   category:'nature'     },
+    { id:'LURE_02', src:'', colour:'blue',  category:'events'     },
+    { id:'LURE_03', src:'', colour:'red',   category:'gastronomy' },
+    { id:'LURE_04', src:'', colour:'green', category:'gastronomy' },
+    { id:'LURE_05', src:'', colour:'blue',  category:'nature'     },
+    { id:'LURE_06', src:'', colour:'red',   category:'events'     },
+    { id:'LURE_07', src:'', colour:'green', category:'nature'     },
+    { id:'LURE_08', src:'', colour:'red',   category:'nature'     },
+    { id:'LURE_09', src:'', colour:'green', category:'events'     },
+    { id:'LURE_10', src:'', colour:'green', category:'events'     },
+    { id:'LURE_11', src:'', colour:'red',   category:'nature'     },
+    { id:'LURE_12', src:'', colour:'blue',  category:'gastronomy' },
+    { id:'LURE_13', src:'', colour:'blue',  category:'events'     },
+    { id:'LURE_14', src:'', colour:'green', category:'gastronomy' },
+    { id:'LURE_15', src:'', colour:'blue',  category:'nature'     },
+    { id:'LURE_16', src:'', colour:'green', category:'gastronomy' },
+    { id:'LURE_17', src:'', colour:'blue',  category:'gastronomy' },
+    { id:'LURE_18', src:'', colour:'blue',  category:'events'     },
+  ]
+};
+
+// Pseudo-randomização: max 2 consecutivos do mesmo tipo, p(OLD)=p(LURE)=0.5
+function pseudoRandomize(olds, lures) {
+  const old = [...olds].sort(() => Math.random() - 0.5);
+  const lure = [...lures].sort(() => Math.random() - 0.5);
+  const seq = [];
+  let oi = 0, li = 0;
+  while (oi < old.length || li < lure.length) {
+    const lastTwo = seq.slice(-2).map(s => s._type);
+    const canOld  = oi < old.length  && !(lastTwo.length === 2 && lastTwo.every(t => t === 'OLD'));
+    const canLure = li < lure.length && !(lastTwo.length === 2 && lastTwo.every(t => t === 'LURE'));
+    let pick;
+    if (canOld && canLure) pick = Math.random() < 0.5 ? 'OLD' : 'LURE';
+    else if (canOld)  pick = 'OLD';
+    else if (canLure) pick = 'LURE';
+    else break;
+    if (pick === 'OLD') { seq.push({ ...old[oi++], _type: 'OLD' }); }
+    else                { seq.push({ ...lure[li++], _type: 'LURE' }); }
+  }
+  return seq;
+}
+
+// Estado
+const state = {
+  sequence: [],
+  trialIdx: 0,
+  trialData: {},
+  responses: [],
+  stimulusTimer: null,
+  questionTimer: null
+};
+
+function startTest() {
+  state.sequence = pseudoRandomize(STIMULI.OLD, STIMULI.LURE);
+  showView('viewStimulus');
+  runTrial();
+}
+
+function runTrial() {
+  if (state.trialIdx >= state.sequence.length) { showEnd(); return; }
+  const stim = state.sequence[state.trialIdx];
+  state.trialData = {
+    trial_nr:       state.trialIdx + 1,
+    stimulus_id:    stim.id,
+    stimulus_type:  stim._type,
+    colour:         stim.colour,
+    category:       stim.category,
+    position_row:   stim.position_row || null,
+    position_col:   stim.position_col || null,
+    q1: null, q2: null, q3: null, q4: null, q5: null, q6: null,
+    rt_q1: null, rt_q6: null,
+    ts_stim: Date.now()
+  };
+
+  // Actualiza progresso
+  const pct = (state.trialIdx / state.sequence.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stimCounter').textContent = `Imagem ${state.trialIdx + 1} de ${state.sequence.length}`;
+
+  // Mostra imagem
+  const wrap = document.getElementById('stimImgWrap');
+  wrap.className = `stimulus-img-wrap ${stim.colour}`;
+  const img = document.getElementById('stimImg');
+  img.src = stim.src || '';
+
+  // Timer 4s
+  const fill = document.getElementById('timerFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  setTimeout(() => {
+    fill.style.transition = 'width 4s linear';
+    fill.style.width = '0%';
+  }, 50);
+
+  clearTimeout(state.stimulusTimer);
+  state.stimulusTimer = setTimeout(() => {
+    showQ1();
+  }, 4000);
+}
+
+function showQ1() {
+  showView('viewQuestion');
+  state.trialData.ts_q1 = Date.now();
+  document.getElementById('qLabel').textContent = 'Pergunta 1 de 6';
+  document.getElementById('qText').textContent = 'Viu esta imagem na tarefa anterior?';
+  const opts = document.getElementById('qOptions');
+  opts.innerHTML = '';
+  const options = [
+    { label: 'Sim', value: 'OLD' },
+    { label: 'Não', value: 'NEW' }
+  ];
+  const list = document.createElement('div');
+  list.className = 'options-list';
+  options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = o.label;
+    btn.onclick = () => {
+      state.trialData.q1 = o.value;
+      state.trialData.rt_q1 = Date.now() - state.trialData.ts_q1;
+      clearTimeout(state.questionTimer);
+      if (o.value === 'OLD') showQ2();
+      else showQ6();
+    };
+    list.appendChild(btn);
+  });
+  opts.appendChild(list);
+  startQuestionTimer(3000, () => {
+    state.trialData.q1 = null;
+    state.trialData.rt_q1 = 3000;
+    showQ6();
+  });
+}
+
+function showQ2() {
+  document.getElementById('qLabel').textContent = 'Pergunta 2 de 6';
+  document.getElementById('qText').textContent = 'Onde estava localizada esta imagem na grelha da página inicial?';
+  const opts = document.getElementById('qOptions');
+  opts.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'grid-3x6';
+  for (let r = 1; r <= 3; r++) {
+    for (let c = 1; c <= 6; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.textContent = `${r},${c}`;
+      cell.onclick = () => {
+        document.querySelectorAll('.grid-cell').forEach(x => x.classList.remove('selected'));
+        cell.classList.add('selected');
+        state.trialData.q2 = `${r},${c}`;
+        clearTimeout(state.questionTimer);
+        setTimeout(() => showQ3(), 300);
+      };
+      grid.appendChild(cell);
+    }
+  }
+  opts.appendChild(grid);
+  startQuestionTimer(3000, () => { state.trialData.q2 = null; showQ3(); });
+}
+
+function showQ3() {
+  document.getElementById('qLabel').textContent = 'Pergunta 3 de 6';
+  document.getElementById('qText').textContent = 'Qual era a cor da moldura desta imagem?';
+  renderOptions([
+    { label: 'Vermelho', value: 'red' },
+    { label: 'Verde',    value: 'green' },
+    { label: 'Azul',     value: 'blue' }
+  ], (val) => { state.trialData.q3 = val; showQ4(); }, 3000);
+}
+
+function showQ4() {
+  document.getElementById('qLabel').textContent = 'Pergunta 4 de 6';
+  document.getElementById('qText').textContent = 'A que categoria pertencia esta imagem?';
+  renderOptions([
+    { label: 'Gastronomia', value: 'gastronomy' },
+    { label: 'Natureza',    value: 'nature' },
+    { label: 'Eventos',     value: 'events' }
+  ], (val) => { state.trialData.q4 = val; showQ5(); }, 3000);
+}
+
+function showQ5() {
+  document.getElementById('qLabel').textContent = 'Pergunta 5 de 6';
+  document.getElementById('qText').textContent = 'Quem abriu o cartão desta imagem?';
+  renderOptions([
+    { label: 'Fui eu',         value: 'self' },
+    { label: 'Foi o sistema',  value: 'system' }
+  ], (val) => { state.trialData.q5 = val; showQ6(); }, 3000);
+}
+
+function showQ6() {
+  document.getElementById('qLabel').textContent = state.trialData.q1 === 'OLD' ? 'Pergunta 6 de 6' : 'Pergunta 2 de 2';
+  document.getElementById('qText').textContent = 'Quão confiante está na sua resposta?';
+  const opts = document.getElementById('qOptions');
+  opts.innerHTML = '';
+  state.trialData.ts_q6 = Date.now();
+
+  const row = document.createElement('div');
+  row.className = 'scale-row';
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'scale-btn';
+    btn.textContent = i;
+    btn.onclick = () => {
+      state.trialData.q6 = i;
+      state.trialData.rt_q6 = Date.now() - state.trialData.ts_q6;
+      clearTimeout(state.questionTimer);
+      finishTrial();
+    };
+    row.appendChild(btn);
+  }
+  const labels = document.createElement('div');
+  labels.className = 'scale-labels';
+  labels.innerHTML = '<span>Nada confiante</span><span>Totalmente confiante</span>';
+  opts.appendChild(row);
+  opts.appendChild(labels);
+  startQuestionTimer(2000, () => { state.trialData.q6 = null; state.trialData.rt_q6 = 2000; finishTrial(); });
+}
+
+function renderOptions(options, onSelect, timeout) {
+  const opts = document.getElementById('qOptions');
+  opts.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'options-list';
+  options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = o.label;
+    btn.onclick = () => {
+      clearTimeout(state.questionTimer);
+      onSelect(o.value);
+    };
+    list.appendChild(btn);
+  });
+  opts.appendChild(list);
+  startQuestionTimer(timeout, () => onSelect(null));
+}
+
+function startQuestionTimer(ms, onTimeout) {
+  const fill = document.getElementById('timeoutFill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  setTimeout(() => {
+    fill.style.transition = `width ${ms}ms linear`;
+    fill.style.width = '0%';
+  }, 30);
+  clearTimeout(state.questionTimer);
+  state.questionTimer = setTimeout(onTimeout, ms);
+}
+
+function finishTrial() {
+  sendToSheet(state.trialData);
+  state.responses.push({ ...state.trialData });
+  state.trialIdx++;
+  // ITI 500ms
+  setTimeout(() => {
+    showView('viewStimulus');
+    runTrial();
+  }, 500);
+}
+
+function sendToSheet(d) {
+  const params = new URLSearchParams({
+    sheet:          'T1_Responses',
+    timestamp:      Date.now(),
+    participant_id: PARTICIPANT_ID,
+    trial_nr:       d.trial_nr,
+    stimulus_id:    d.stimulus_id,
+    stimulus_type:  d.stimulus_type,
+    q1_response:    d.q1 || '',
+    q2_position:    d.q2 || '',
+    q3_colour:      d.q3 || '',
+    q4_category:    d.q4 || '',
+    q5_agent:       d.q5 || '',
+    q6_confidence:  d.q6 || '',
+    rt_q1:          d.rt_q1 || '',
+    rt_q6:          d.rt_q6 || ''
+  });
+  const img = new Image();
+  img.src = SHEET_URL + '?' + params.toString();
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+
+function showEnd() {
+  document.getElementById('progressFill').style.width = '100%';
+  showView('viewEnd');
+  try { sessionStorage.setItem('t1_responses', JSON.stringify(state.responses)); } catch(e) {}
+}
+
+function advanceStudy() {
+  try {
+    if (window.iMotionsWebStudy?.endStimulus) window.iMotionsWebStudy.endStimulus();
+    else if (window.parent?.iMotions?.endStimulus) window.parent.iMotions.endStimulus();
+    else window.parent?.postMessage('stimulus_complete', '*');
+  } catch(e) {}
+}
+</script>
+</body>
+</html>
