@@ -532,7 +532,8 @@ function buildT2Link(t1Done) {
   // Constrói o URL do T2 independentemente do nome do ficheiro T1
   const origin = window.location.origin;
   const pathParts = window.location.pathname.split('/');
-  pathParts[pathParts.length - 1] = 'T2_memory.html';
+  // Nome do ficheiro para T2
+  pathParts[pathParts.length - 1] = 'T2_Memory.html';
   const base = origin + pathParts.join('/');
   return `${base}?pid=${PARTICIPANT_ID}&t1=${t1Done}`;
 }
