@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encoding Task — Digital Tourism</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff; --border: #e0ddd6;
+    --text-primary: #1a1916; --text-secondary: #6b6860; --text-hint: #a8a49d;
+    --red: #c0392b; --green: #27ae60; --blue: #2471a3;
+    --radius: 6px; --card-w: 130px; --card-h: 100px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg); color: var(--text-primary);
+    min-height: 100vh; user-select: none;
+  }
+
+  /* ── VISTA GRELHA ── */
+  #viewGrid {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 32px 24px 48px; min-height: 100vh;
+  }
+  .header {
+    width: 100%; max-width: 900px;
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 28px;
+  }
+  .header-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); letter-spacing: .06em; text-transform: uppercase; }
+  .progress-wrap { display: flex; align-items: center; gap: 10px; }
+  .progress-bar { width: 120px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--text-primary); border-radius: 2px; transition: width .4s ease; width: 0%; }
+  .progress-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); min-width: 36px; text-align: right; }
+
+  .instruction {
+    width: 100%; max-width: 900px;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 12px 18px;
+    font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5;
+  }
+  .instruction strong { color: var(--text-primary); font-weight: 500; }
+
+  .grid-container {
+    display: grid; grid-template-columns: repeat(6, var(--card-w));
+    gap: 10px;
+  }
+
+  .card {
+    width: var(--card-w); height: var(--card-h);
+    border-radius: var(--radius); cursor: pointer;
+    position: relative; overflow: hidden; transition: transform .12s ease;
+    background: var(--surface);
+  }
+  .card.red   { border: 3px solid var(--red); }
+  .card.green { border: 3px solid var(--green); }
+  .card.blue  { border: 3px solid var(--blue); }
+  .card:not(.done):not(.locked):hover { transform: translateY(-2px); }
+  .card.locked { cursor: default; }
+  .card.done   { cursor: default; opacity: .28; filter: grayscale(1); }
+
+  .card::before {
+    content: ''; position: absolute; top: 6px; left: 6px;
+    width: 9px; height: 9px; border-radius: 2px; z-index: 3;
+  }
+  .card.red::before   { background: var(--red); }
+  .card.green::before { background: var(--green); }
+  .card.blue::before  { background: var(--blue); }
+
+  .card-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    opacity: 0; transition: opacity .3s ease; position: absolute; inset: 0;
+  }
+  .card-img.revealed { opacity: 1; }
+
+  .card-cover {
+    position: absolute; inset: 0; background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2; transition: opacity .25s ease;
+  }
+  .card-cover.hidden { opacity: 0; pointer-events: none; }
+  .card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
+
+  /* ── VISTA QUESTIONÁRIO ── */
+  #viewAgency {
+    display: none; min-height: 100vh;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 24px; background: var(--bg);
+  }
+  #viewAgency.show { display: flex; }
+
+  .agency-wrap {
+    width: 100%; max-width: 560px;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 40px 40px 36px;
+  }
+  .agency-counter { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); margin-bottom: 24px; text-align: center; }
+  .agency-question { font-size: 17px; font-weight: 400; color: var(--text-primary); text-align: center; line-height: 1.5; margin-bottom: 32px; }
+  .scale-row { display: flex; }
+  .scale-btn {
+    flex: 1; height: 52px; border: 0.5px solid var(--border);
+    background: var(--surface); font-family: 'DM Mono', monospace;
+    font-size: 15px; color: var(--text-secondary); cursor: pointer;
+    transition: background .1s, color .1s;
+  }
+  .scale-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .scale-btn:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+  .scale-btn:not(:first-child) { border-left: none; }
+  .scale-btn:hover { background: #f0ede8; color: var(--text-primary); }
+  .scale-btn.selected { background: var(--text-primary); color: #fff; border-color: var(--text-primary); font-weight: 500; }
+  .scale-labels { display: flex; justify-content: space-between; margin-top: 10px; font-size: 11px; color: var(--text-hint); padding: 0 2px; }
+
+  /* ── END ── */
+  #viewEnd { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 16px; padding: 48px; }
+  #viewEnd.show { display: flex; }
+  .end-title { font-size: 24px; font-weight: 300; }
+  .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .end-btn {
+    margin-top: 8px; padding: 14px 40px;
+    background: var(--text-primary); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; letter-spacing: .02em; transition: background .15s;
+  }
+  .end-btn:hover { background: #333; }
+</style>
+</head>
+<body>
+
+<div id="viewGrid">
+  <div class="header">
+    <span class="header-title">Encoding task</span>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-label" id="progressLabel">0 / 18</span>
+    </div>
+  </div>
+  <div class="instruction">
+    Clique em cada cartão para o abrir. <strong>Complete todos os 18 cartões.</strong>
+  </div>
+  <div class="grid-container" id="grid"></div>
+</div>
+
+<div id="viewAgency">
+  <div class="agency-wrap">
+    <div class="agency-counter" id="agencyCounter">Cartão 1 de 18</div>
+    <div class="agency-question">Até que ponto sentiu que teve controlo sobre a ação que acabou de realizar?</div>
+    <div class="scale-row" id="scaleRow">
+      <button class="scale-btn" onclick="submitAgency(1)">1</button>
+      <button class="scale-btn" onclick="submitAgency(2)">2</button>
+      <button class="scale-btn" onclick="submitAgency(3)">3</button>
+      <button class="scale-btn" onclick="submitAgency(4)">4</button>
+      <button class="scale-btn" onclick="submitAgency(5)">5</button>
+      <button class="scale-btn" onclick="submitAgency(6)">6</button>
+      <button class="scale-btn" onclick="submitAgency(7)">7</button>
+      <button class="scale-btn" onclick="submitAgency(8)">8</button>
+      <button class="scale-btn" onclick="submitAgency(9)">9</button>
+      <button class="scale-btn" onclick="submitAgency(10)">10</button>
+    </div>
+    <div class="scale-labels">
+      <span>Nenhum controlo</span>
+      <span>Controlo moderado</span>
+      <span>Controlo total</span>
+    </div>
+  </div>
+</div>
+
+<div id="viewEnd">
+  <div class="end-title">Tarefa concluída</div>
+  <div class="end-subtitle">Selecionou todos os 18 cartões.<br>Pode fechar esta janela.</div>
+</div>
+
+<script>
+// Padrão xadrez: posição 0-17 na grelha (linha * 6 + coluna)
+// Linha 1 (pos 0-5):  H L H L H L
+// Linha 2 (pos 6-11): L H L H L H
+// Linha 3 (pos12-17): H L H L H L
+const AGENCY_PATTERN = [
+  'high','low','high','low','high','low',  // linha 1
+  'low','high','low','high','low','high',  // linha 2
+  'high','low','high','low','high','low'   // linha 3
+];
+
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
+
+// Gera participant_id único por sessão (timestamp + random)
+const PARTICIPANT_ID = 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+function sendToSheet(row) {
+  // Usa GET com parâmetros para contornar CORS
+  const params = new URLSearchParams({
+    timestamp:      row.ts_click,
+    participant_id: PARTICIPANT_ID,
+    card_id:        row.cardId,
+    position_row:   row.position_row,
+    position_col:   row.position_col,
+    colour:         row.colour,
+    category:       row.category,
+    condition:      row.condition,
+    delay_ms:       row.delay_ms,
+    agency_rating:  row.agency_rating,
+    rt_ms:          row.ts_response - row.ts_click
+  });
+  // Injected via image tag — contorna CORS completamente
+  const img = new Image();
+  img.src = SHEET_URL + '?' + params.toString();
+}
+
+const CONFIG = {
+  lowDelayMin: 800,
+  lowDelayMax: 1000,
+  images: [
+    { id:  1, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163998/card_01.jpg', colour: 'green', category: 'nature',     position: 0  },
+    { id:  2, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_02.jpg', colour: 'red',   category: 'events',     position: 1  },
+    { id:  3, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_03.jpg', colour: 'green', category: 'gastronomy', position: 2  },
+    { id:  4, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_04.jpg', colour: 'blue',  category: 'gastronomy', position: 3  },
+    { id:  5, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_05.jpg', colour: 'red',   category: 'nature',     position: 4  },
+    { id:  6, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_06.jpg', colour: 'green', category: 'events',     position: 5  },
+    { id:  7, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_07.jpg', colour: 'blue',  category: 'nature',     position: 6  },
+    { id:  8, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_08.jpg', colour: 'green', category: 'nature',     position: 7  },
+    { id:  9, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_09.jpg', colour: 'blue',  category: 'events',     position: 8  },
+    { id: 10, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_10.jpg', colour: 'blue',  category: 'events',     position: 9  },
+    { id: 11, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_11.jpg', colour: 'blue',  category: 'nature',     position: 10 },
+    { id: 12, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_12.jpg', colour: 'green', category: 'gastronomy', position: 11 },
+    { id: 13, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_13.jpg', colour: 'green', category: 'events',     position: 12 },
+    { id: 14, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_14.jpg', colour: 'blue',  category: 'gastronomy', position: 13 },
+    { id: 15, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_15.jpg', colour: 'red',   category: 'nature',     position: 14 },
+    { id: 16, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_16.jpg', colour: 'red',   category: 'gastronomy', position: 15 },
+    { id: 17, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_17.jpg', colour: 'red',   category: 'gastronomy', position: 16 },
+    { id: 18, src: 'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163908/card_18.jpg', colour: 'red',   category: 'events',     position: 17 }
+  ]
+};
+
+const state = { done: [], waiting: false, responses: [], pendingMeta: null, agencyTimer: null };
+
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  [...CONFIG.images].sort((a,b) => a.position - b.position).forEach(img => {
+    const card = document.createElement('div');
+    card.className = `card ${img.colour}`;
+    card.id = `card-${img.id}`;
+
+    const im = document.createElement('img');
+    im.className = 'card-img';
+    im.alt = '';
+    card.appendChild(im);
+
+    const cover = document.createElement('div');
+    cover.className = 'card-cover';
+    cover.id = `cover-${img.id}`;
+    const num = document.createElement('span');
+    num.className = 'card-num';
+    num.textContent = img.id;
+    cover.appendChild(num);
+    card.appendChild(cover);
+
+    card.addEventListener('click', () => onCardClick(img));
+    grid.appendChild(card);
+  });
+}
+
+function onCardClick(img) {
+  if (state.waiting || state.done.includes(img.id)) return;
+  state.waiting = true;
+  const tsClick = Date.now();
+
+  document.querySelectorAll('.card').forEach(c => c.classList.add('locked'));
+
+  // Condição determinada pelo padrão xadrez da posição na grelha
+  const condition = AGENCY_PATTERN[img.position];
+  const delay = condition === 'low'
+    ? Math.floor(Math.random() * (CONFIG.lowDelayMax - CONFIG.lowDelayMin + 1)) + CONFIG.lowDelayMin
+    : 0;
+
+  setTimeout(() => {
+    const cardEl = document.getElementById(`card-${img.id}`);
+    const im = cardEl.querySelector('.card-img');
+    im.src = img.src;
+    im.onload = () => im.classList.add('revealed');
+    document.getElementById(`cover-${img.id}`).classList.add('hidden');
+
+    state.pendingMeta = { img, condition, delay, tsClick };
+    setTimeout(() => showAgency(), 600);
+  }, delay);
+}
+
+function showAgency() {
+  document.getElementById('viewGrid').style.display = 'none';
+  document.getElementById('agencyCounter').textContent =
+    `Cartão ${state.done.length + 1} de 18`;
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('viewAgency').classList.add('show');
+  // Timeout de 3s conforme protocolo
+  clearTimeout(state.agencyTimer);
+  state.agencyTimer = setTimeout(() => {
+    if (state.waiting) {
+      // Regista sem resposta e avança
+      state.pendingMeta && submitAgency(null);
+    }
+  }, 3000);
+}
+
+function submitAgency(rating) {
+  clearTimeout(state.agencyTimer);
+  const { img, condition, delay, tsClick } = state.pendingMeta;
+
+  document.querySelectorAll('.scale-btn')[rating-1].classList.add('selected');
+
+  const row = {
+    cardId:        img.id,
+    position_row:  Math.floor(img.position / 6) + 1,
+    position_col:  (img.position % 6) + 1,
+    colour:        img.colour,
+    category:      img.category,
+    condition:     condition,
+    delay_ms:      delay,
+    agency_rating: rating !== null ? rating : null,
+    ts_click:      tsClick,
+    ts_response:   Date.now()
+  };
+  state.responses.push(row);
+  sendToSheet(row);
+
+  state.done.push(img.id);
+  state.waiting = false;
+
+  // ITI 500ms antes de voltar à grelha
+  setTimeout(() => {
+    document.getElementById('viewAgency').classList.remove('show');
+    document.getElementById(`card-${img.id}`).classList.add('done');
+    document.querySelectorAll('.card:not(.done)').forEach(c => c.classList.remove('locked'));
+
+    if (state.done.length === CONFIG.images.length) {
+      showEnd();
+    } else {
+      document.getElementById('viewGrid').style.display = 'flex';
+      updateProgress();
+    }
+  }, 500); // ITI = 500ms conforme protocolo
+}
+
+function updateProgress() {
+  const n = state.done.length, total = CONFIG.images.length;
+  document.getElementById('progressFill').style.width = `${(n/total)*100}%`;
+  document.getElementById('progressLabel').textContent = `${n} / ${total}`;
+}
+
+function showEnd() {
+  document.getElementById("viewGrid").style.display = "none";
+  document.getElementById("viewEnd").classList.add("show");
+
+  try { sessionStorage.setItem("encoding_responses", JSON.stringify(state.responses)); } catch(e) {}
+}
+
+function advanceStudy() {
+  // Tenta avançar o iMotions para o próximo segmento
+  try {
+    if (window.iMotionsWebStudy?.endStimulus) {
+      window.iMotionsWebStudy.endStimulus();
+    } else if (window.parent?.iMotions?.endStimulus) {
+      window.parent.iMotions.endStimulus();
+    } else {
+      window.parent?.postMessage({ type: 'imotions_encoding_complete', data: state.responses }, '*');
+      window.parent?.postMessage('stimulus_complete', '*');
+    }
+  } catch(e) {}
+}
+
+buildGrid();
+updateProgress();
+</script>
+</body>
+</html>
