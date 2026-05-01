@@ -9,7 +9,7 @@
   :root {
     --bg: #f5f4f0; --surface: #ffffff; --border: #e0ddd6;
     --text-primary: #1a1916; --text-secondary: #6b6860; --text-hint: #a8a49d;
-    --red: #c0392b; --green: #27ae60; --blue: #2471a3;
+    --red: #e74c3c; --green: #27ae60; --blue: #2980b9;
     --radius: 6px;
     --card-w: min(calc((100vw - 120px) / 6), calc((100vh - 220px) / 3));
     --card-h: calc(var(--card-w) * 0.75);
@@ -64,9 +64,9 @@
     position: relative; overflow: hidden; transition: transform .12s ease;
     background: var(--surface);
   }
-  .card.red   { border: 3px solid var(--red); }
-  .card.green { border: 3px solid var(--green); }
-  .card.blue  { border: 3px solid var(--blue); }
+  .card.red   { border: 5px solid var(--red); }
+  .card.green { border: 5px solid var(--green); }
+  .card.blue  { border: 5px solid var(--blue); }
   .card:not(.done):not(.locked):hover { transform: translateY(-2px); }
   .card.locked { cursor: default; }
   .card.done   { cursor: default; opacity: .28; filter: grayscale(1); }
