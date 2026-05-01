@@ -36,7 +36,7 @@
   .stimulus-img-wrap.green { border-color: var(--green); }
   .stimulus-img-wrap.blue  { border-color: var(--blue); }
   .stimulus-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .timer-bar { width: 320px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; margin-top: 4px; }
+  .timer-bar { width: min(calc(100vw - 80px), calc((100vh - 200px) * 4 / 3)); height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; margin-top: 4px; }
   .timer-fill { height: 100%; background: var(--text-secondary); transition: width linear; width: 100%; }
   #viewQuestion { background: var(--bg); }
   .question-card { max-width: 520px; width: 100%; background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 36px 40px; }
