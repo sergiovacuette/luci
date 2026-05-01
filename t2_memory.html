@@ -84,10 +84,10 @@
   <div class="instr-card">
     <div class="instr-title">Teste de memória — sessão 2</div>
     <div class="instr-body">
-      <p>Nesta tarefa, irá novamente ver uma série de imagens, apresentadas uma de cada vez.</p>
-      <p>Para cada imagem, deverá indicar se a viu anteriormente na <strong>sessão anterior</strong>.</p>
-      <p>Se respondeu que sim, serão apresentadas algumas perguntas adicionais sobre essa imagem.</p>
-      <p>Por favor, responda com base na sua memória, mesmo que não tenha a certeza, e tente ser o mais preciso possível.</p>
+      <p>Nesta tarefa, irá novamente ver uma série de imagens emolduradas, apresentadas uma de cada vez.</p>
+      <p>Algumas imagens foram apresentadas na <strong>Sessão 1</strong>, enquanto outras são novas.</p>
+      <p>Para cada imagem, deverá indicar se a viu anteriormente. Se indicar que sim, serão apresentadas algumas perguntas adicionais sobre o contexto em que essa imagem apareceu na grelha inicial.</p>
+      <p>Por favor, responda com base na sua memória, mesmo que não tenha a certeza, e tente ser o mais preciso possível. Não existem respostas certas ou erradas. Responda de forma rápida e honesta.</p>
     </div>
     <button class="btn-primary" onclick="startTest()">Iniciar</button>
   </div>
@@ -155,46 +155,46 @@ const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid') ||
 
 const STIMULI = {
   OLD: [
-    { id:'OLD_01', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/v1775163998/serene-lake-sunset_907300-639_ar6wai.jpg', colour:'green', category:'nature',     position_row:1, position_col:1 },
-    { id:'OLD_02', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_02.jpg', colour:'red',   category:'events',     position_row:1, position_col:2 },
-    { id:'OLD_03', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_03.jpg', colour:'green', category:'gastronomy', position_row:1, position_col:3 },
-    { id:'OLD_04', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_04.jpg', colour:'blue',  category:'gastronomy', position_row:1, position_col:4 },
-    { id:'OLD_05', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_05.jpg', colour:'red',   category:'nature',     position_row:1, position_col:5 },
-    { id:'OLD_06', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_06.jpg', colour:'green', category:'events',     position_row:1, position_col:6 },
-    { id:'OLD_07', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_07.jpg', colour:'blue',  category:'nature',     position_row:2, position_col:1 },
-    { id:'OLD_08', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_08.jpg', colour:'green', category:'nature',     position_row:2, position_col:2 },
-    { id:'OLD_09', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_09.jpg', colour:'blue',  category:'events',     position_row:2, position_col:3 },
-    { id:'OLD_10', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_10.jpg', colour:'blue',  category:'events',     position_row:2, position_col:4 },
-    { id:'OLD_11', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_11.jpg', colour:'blue',  category:'nature',     position_row:2, position_col:5 },
-    { id:'OLD_12', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_12.jpg', colour:'green', category:'gastronomy', position_row:2, position_col:6 },
-    { id:'OLD_13', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_13.jpg', colour:'green', category:'events',     position_row:3, position_col:1 },
-    { id:'OLD_14', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_14.jpg', colour:'blue',  category:'gastronomy', position_row:3, position_col:2 },
-    { id:'OLD_15', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_15.jpg', colour:'red',   category:'nature',     position_row:3, position_col:3 },
-    { id:'OLD_16', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_16.jpg', colour:'red',   category:'gastronomy', position_row:3, position_col:4 },
-    { id:'OLD_17', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_17.jpg', colour:'red',   category:'gastronomy', position_row:3, position_col:5 },
-    { id:'OLD_18', src:'https://res.cloudinary.com/ds7il2gn9/image/upload/card_18.jpg', colour:'red',   category:'events',     position_row:3, position_col:6 },
+    { id:'OLD_01', src:'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Animals_100_h.jpg', colour:'green', category:'nature',     position_row:1, position_col:1 },
+    { id:'OLD_02', src:'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_050_h.jpg', colour:'red',   category:'events',     position_row:1, position_col:2 },
+    { id:'OLD_03', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_016_h.jpg', colour:'green', category:'gastronomy', position_row:1, position_col:3 },
+    { id:'OLD_04', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_048_h.jpg', colour:'blue',  category:'gastronomy', position_row:1, position_col:4 },
+    { id:'OLD_05', src:'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_021_h.jpg', colour:'red',   category:'nature',     position_row:1, position_col:5 },
+    { id:'OLD_06', src:'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_234_h.jpg', colour:'green', category:'events',     position_row:1, position_col:6 },
+    { id:'OLD_07', src:'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_102_h.jpg', colour:'blue',  category:'nature',     position_row:2, position_col:1 },
+    { id:'OLD_08', src:'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_157_h.jpg', colour:'green', category:'nature',     position_row:2, position_col:2 },
+    { id:'OLD_09', src:'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_286_h.jpg', colour:'blue',  category:'events',     position_row:2, position_col:3 },
+    { id:'OLD_10', src:'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_046_h.jpg', colour:'blue',  category:'events',     position_row:2, position_col:4 },
+    { id:'OLD_11', src:'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_173_h.jpg', colour:'blue',  category:'nature',     position_row:2, position_col:5 },
+    { id:'OLD_12', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_051_h.jpg', colour:'green', category:'gastronomy', position_row:2, position_col:6 },
+    { id:'OLD_13', src:'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_175_h.jpg', colour:'green', category:'events',     position_row:3, position_col:1 },
+    { id:'OLD_14', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_062_h.jpg', colour:'blue',  category:'gastronomy', position_row:3, position_col:2 },
+    { id:'OLD_15', src:'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_180_h.jpg', colour:'red',   category:'nature',     position_row:3, position_col:3 },
+    { id:'OLD_16', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_082_h.jpg', colour:'red',   category:'gastronomy', position_row:3, position_col:4 },
+    { id:'OLD_17', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/People_067_h.jpg', colour:'red',   category:'gastronomy', position_row:3, position_col:5 },
+    { id:'OLD_18', src:'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_185_h.jpg', colour:'red',   category:'events',     position_row:3, position_col:6 },
   ],
   // LURE L2 — diferentes das L1 usadas no T1
   // Preenche os src quando tiveres as imagens no Cloudinary
   LURE: [
-    { id:'L2_01', src:'', colour:'blue',  category:'nature'     },
-    { id:'L2_02', src:'', colour:'green', category:'events'     },
-    { id:'L2_03', src:'', colour:'blue',  category:'gastronomy' },
-    { id:'L2_04', src:'', colour:'red',   category:'gastronomy' },
-    { id:'L2_05', src:'', colour:'green', category:'nature'     },
-    { id:'L2_06', src:'', colour:'blue',  category:'events'     },
-    { id:'L2_07', src:'', colour:'red',   category:'nature'     },
-    { id:'L2_08', src:'', colour:'green', category:'nature'     },
-    { id:'L2_09', src:'', colour:'red',   category:'events'     },
-    { id:'L2_10', src:'', colour:'red',   category:'events'     },
-    { id:'L2_11', src:'', colour:'green', category:'nature'     },
-    { id:'L2_12', src:'', colour:'red',   category:'gastronomy' },
-    { id:'L2_13', src:'', colour:'red',   category:'events'     },
-    { id:'L2_14', src:'', colour:'blue',  category:'gastronomy' },
-    { id:'L2_15', src:'', colour:'green', category:'nature'     },
-    { id:'L2_16', src:'', colour:'blue',  category:'gastronomy' },
-    { id:'L2_17', src:'', colour:'green', category:'gastronomy' },
-    { id:'L2_18', src:'', colour:'green', category:'events'     },
+    { id:'L2_01', src:'https://sergiovacuette.github.io/luci/images/Nature/Decoding_T2/Animals_219_h.jpg', colour:'blue',  category:'nature'     },
+    { id:'L2_02', src:'https://sergiovacuette.github.io/luci/images/Nature/Decoding_T2/Landscapes_142_h.jpg', colour:'green', category:'events'     },
+    { id:'L2_03', src:'https://sergiovacuette.github.io/luci/images/Nature/Decoding_T2/Landscapes_151_h.jpg', colour:'blue',  category:'gastronomy' },
+    { id:'L2_04', src:'https://sergiovacuette.github.io/luci/images/Nature/Decoding_T2/Landscapes_161_h.jpg', colour:'red',   category:'gastronomy' },
+    { id:'L2_05', src:'https://sergiovacuette.github.io/luci/images/Nature/Decoding_T2/People_030_h.jpg', colour:'green', category:'nature'     },
+    { id:'L2_06', src:'https://sergiovacuette.github.io/luci/images/Nature/Decoding_T2/People_115_h.jpg', colour:'blue',  category:'events'     },
+    { id:'L2_07', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Decoding_T2/Objects_037_h.jpg', colour:'red',   category:'nature'     },
+    { id:'L2_08', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Decoding_T2/Objects_052_h.jpg', colour:'green', category:'nature'     },
+    { id:'L2_09', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Decoding_T2/Objects_059_h.jpg', colour:'red',   category:'events'     },
+    { id:'L2_10', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Decoding_T2/Objects_081_h.jpg', colour:'red',   category:'events'     },
+    { id:'L2_11', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Decoding_T2/Objects_083_h.jpg', colour:'green', category:'nature'     },
+    { id:'L2_12', src:'https://sergiovacuette.github.io/luci/images/Gastronomy/Decoding_T2/People_064_h.jpg', colour:'red',   category:'gastronomy' },
+    { id:'L2_13', src:'https://sergiovacuette.github.io/luci/images/Events/Decoding_T2/Faces_080_h.jpg', colour:'red',   category:'events'     },
+    { id:'L2_14', src:'https://sergiovacuette.github.io/luci/images/Events/Decoding_T2/Faces_295_h.jpg', colour:'blue',  category:'gastronomy' },
+    { id:'L2_15', src:'https://sergiovacuette.github.io/luci/images/Events/Decoding_T2/Objects_266_h.jpg', colour:'green', category:'nature'     },
+    { id:'L2_16', src:'https://sergiovacuette.github.io/luci/images/Events/Decoding_T2/People_099_h.jpg', colour:'blue',  category:'gastronomy' },
+    { id:'L2_17', src:'https://sergiovacuette.github.io/luci/images/Events/Decoding_T2/People_193_h.jpg', colour:'green', category:'gastronomy' },
+    { id:'L2_18', src:'https://sergiovacuette.github.io/luci/images/Events/Decoding_T2/People_196_h.jpg', colour:'green', category:'events'     },
   ]
 };
 
@@ -255,7 +255,7 @@ function runTrial() {
 function showQ1() {
   showView('viewQuestion');
   state.trialData.ts_q1 = Date.now();
-  document.getElementById('qLabel').textContent = 'Pergunta 1 de 6';
+  document.getElementById('qLabel').textContent = 'Reconhecimento';
   document.getElementById('qText').textContent = 'Viu esta imagem na sessão anterior?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -277,7 +277,7 @@ function showQ1() {
 }
 
 function showQ2() {
-  document.getElementById('qLabel').textContent = 'Pergunta 2 de 6';
+  document.getElementById('qLabel').textContent = 'Posição espacial';
   document.getElementById('qText').textContent = 'Onde estava localizada esta imagem na grelha da página inicial?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -302,28 +302,28 @@ function showQ2() {
 }
 
 function showQ3() {
-  document.getElementById('qLabel').textContent = 'Pergunta 3 de 6';
-  document.getElementById('qText').textContent = 'Qual era a cor da moldura desta imagem?';
+  document.getElementById('qLabel').textContent = 'Cor da moldura';
+  document.getElementById('qText').textContent = 'Qual era a cor da moldura desta imagem na página inicial?';
   renderOptions([{ label:'Vermelho', value:'red' }, { label:'Verde', value:'green' }, { label:'Azul', value:'blue' }],
     (val) => { state.trialData.q3 = val; showQ4(); }, 3000);
 }
 
 function showQ4() {
-  document.getElementById('qLabel').textContent = 'Pergunta 4 de 6';
-  document.getElementById('qText').textContent = 'A que categoria pertencia esta imagem?';
+  document.getElementById('qLabel').textContent = 'Categoria';
+  document.getElementById('qText').textContent = 'Esta imagem estava associada a que tipo de conteúdo?';
   renderOptions([{ label:'Gastronomia', value:'gastronomy' }, { label:'Natureza', value:'nature' }, { label:'Eventos', value:'events' }],
     (val) => { state.trialData.q4 = val; showQ5(); }, 3000);
 }
 
 function showQ5() {
-  document.getElementById('qLabel').textContent = 'Pergunta 5 de 6';
+  document.getElementById('qLabel').textContent = 'Agência';
   document.getElementById('qText').textContent = 'Quem abriu o cartão desta imagem?';
   renderOptions([{ label:'Fui eu', value:'self' }, { label:'Foi o sistema', value:'system' }],
     (val) => { state.trialData.q5 = val; showQ6(); }, 3000);
 }
 
 function showQ6() {
-  document.getElementById('qLabel').textContent = state.trialData.q1 === 'OLD' ? 'Pergunta 6 de 6' : 'Pergunta 2 de 2';
+  document.getElementById('qLabel').textContent = 'Confiança';
   document.getElementById('qText').textContent = 'Quão confiante está na sua resposta?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -339,7 +339,8 @@ function showQ6() {
     row.appendChild(btn);
   }
   const labels = document.createElement('div'); labels.className = 'scale-labels';
-  labels.innerHTML = '<span>Nada confiante</span><span>Totalmente confiante</span>';
+  labels.innerHTML = '<span>Nada confiante</span><span>Pouco confiante</span><span>Algo confiante</span><span>Moderadamente confiante</span><span>Confiante</span><span>Totalmente confiante</span>';
+  labels.style.justifyContent = 'space-between';
   opts.appendChild(row); opts.appendChild(labels);
   startQuestionTimer(2000, () => { state.trialData.q6 = null; state.trialData.rt_q6 = 2000; finishTrial(); });
 }
