@@ -23,8 +23,16 @@
 
   /* ── VISTA GRELHA ── */
   #viewGrid {
-    display: flex; flex-direction: column; align-items: center;
+    display: none; flex-direction: column; align-items: center;
     padding: 32px 24px 48px; min-height: 100vh;
+  }
+  #viewGrid.show { display: flex; }
+  .progress-overlay {
+    position: fixed; top: 12px; right: 16px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--text-hint); background: var(--surface);
+    padding: 4px 10px; border-radius: 20px;
+    border: 0.5px solid var(--border); z-index: 100;
   }
   .header {
     width: 100%; max-width: 900px;
@@ -83,7 +91,7 @@
     z-index: 2; transition: opacity .25s ease;
   }
   .card-cover.hidden { opacity: 0; pointer-events: none; }
-  .card-num { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
+  .card-num { display: none; }
 
   /* ── VISTA QUESTIONÁRIO ── */
   #viewAgency {
@@ -131,17 +139,8 @@
 </head>
 <body>
 
-<div id="viewGrid">
-  <div class="header">
-    <span class="header-title">Encoding task</span>
-    <div class="progress-wrap">
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-      <span class="progress-label" id="progressLabel">0 / 18</span>
-    </div>
-  </div>
-  <div class="instruction">
-    Clique em cada cartão para o abrir. <strong>Complete todos os 18 cartões.</strong>
-  </div>
+<div class="progress-overlay"><span id="progressLabel">0 / 18</span></div>
+<div id="viewGrid" class="show">
   <div class="grid-container" id="grid"></div>
 </div>
 
@@ -253,9 +252,7 @@ function buildGrid() {
     cover.className = 'card-cover';
     cover.id = `cover-${img.id}`;
     const num = document.createElement('span');
-    num.className = 'card-num';
-    num.textContent = img.id;
-    cover.appendChild(num);
+    // card number removed
     card.appendChild(cover);
 
     card.addEventListener('click', () => onCardClick(img));
@@ -289,7 +286,7 @@ function onCardClick(img) {
 }
 
 function showAgency() {
-  document.getElementById('viewGrid').style.display = 'none';
+  document.getElementById('viewGrid').classList.remove('show');
   document.getElementById('agencyCounter').textContent =
     `Cartão ${state.done.length + 1} de 18`;
   document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
@@ -328,7 +325,7 @@ function submitAgency(rating) {
     if (state.done.length === CONFIG.images.length) {
       showEnd();
     } else {
-      document.getElementById('viewGrid').style.display = 'flex';
+      document.getElementById('viewGrid').classList.add('show');
       updateProgress();
     }
   }, 500); // ITI = 500ms conforme protocolo
@@ -341,7 +338,7 @@ function updateProgress() {
 }
 
 function showEnd() {
-  document.getElementById("viewGrid").style.display = "none";
+  document.getElementById("viewGrid").classList.remove("show");
   document.getElementById("viewEnd").classList.add("show");
 
   try { sessionStorage.setItem("encoding_responses", JSON.stringify(state.responses)); } catch(e) {}
