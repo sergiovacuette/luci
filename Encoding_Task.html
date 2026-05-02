@@ -11,8 +11,11 @@
     --text-primary: #1a1916; --text-secondary: #6b6860; --text-hint: #a8a49d;
     --red: #e74c3c; --green: #27ae60; --blue: #2980b9;
     --radius: 6px;
-    --card-w: min(calc((100vw - 120px) / 6), calc((100vh - 220px) / 3));
+    --card-w: min(calc((100vw - 120px) / 6), calc((100vh - 180px) / 3));
     --card-h: calc(var(--card-w) * 0.75);
+    /* Overlay image size — same as T1/T2 stimulus */
+    --stim-w: min(calc(100vw - 80px), calc((100vh - 200px) * 4 / 3));
+    --stim-h: min(calc((100vw - 80px) * 3 / 4), calc(100vh - 200px));
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -21,56 +24,40 @@
     min-height: 100vh; user-select: none;
   }
 
-  /* ── VISTA GRELHA ── */
-  #viewGrid {
-    display: none; flex-direction: column; align-items: center;
-    padding: 32px 24px 48px; min-height: 100vh;
-  }
-  #viewGrid.show { display: flex; }
+  /* ── PROGRESS OVERLAY ── */
   .progress-overlay {
     position: fixed; top: 12px; right: 16px;
     font-family: 'DM Mono', monospace; font-size: 11px;
     color: var(--text-hint); background: var(--surface);
     padding: 4px 10px; border-radius: 20px;
-    border: 0.5px solid var(--border); z-index: 100;
+    border: 0.5px solid var(--border); z-index: 200;
   }
-  .header {
-    width: 100%; max-width: 900px;
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 28px;
-  }
-  .header-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); letter-spacing: .06em; text-transform: uppercase; }
-  .progress-wrap { display: flex; align-items: center; gap: 10px; }
-  .progress-bar { width: 120px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--text-primary); border-radius: 2px; transition: width .4s ease; width: 0%; }
-  .progress-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); min-width: 36px; text-align: right; }
 
-  .instruction {
-    width: 100%;
-    background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: var(--radius); padding: 10px 18px;
-    font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5;
+  /* ── GRELHA ── */
+  #viewGrid {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 100vh; padding: 20px;
   }
-  .instruction strong { color: var(--text-primary); font-weight: 500; }
-
   .grid-container {
     display: grid; grid-template-columns: repeat(6, var(--card-w));
     gap: clamp(6px, 0.8vw, 12px);
   }
 
+  /* ── CARDS ── */
   .card {
     width: var(--card-w); height: var(--card-h);
     border-radius: var(--radius); cursor: pointer;
-    position: relative; overflow: hidden; transition: transform .12s ease;
+    position: relative; overflow: hidden;
+    transition: transform .12s ease;
     background: var(--surface);
   }
-  .card.red   { border: 10px solid var(--red); }
-  .card.green { border: 10px solid var(--green); }
-  .card.blue  { border: 10px solid var(--blue); }
+  .card.red   { border: 8px solid var(--red); }
+  .card.green { border: 8px solid var(--green); }
+  .card.blue  { border: 8px solid var(--blue); }
   .card:not(.done):not(.locked):hover { transform: translateY(-2px); }
   .card.locked { cursor: default; }
-  .card.done   { cursor: default; opacity: .28; filter: grayscale(1); }
 
+  /* Colour dot */
   .card::before {
     content: ''; position: absolute; top: 6px; left: 6px;
     width: 9px; height: 9px; border-radius: 2px; z-index: 3;
@@ -79,28 +66,54 @@
   .card.green::before { background: var(--green); }
   .card.blue::before  { background: var(--blue); }
 
+  /* Image inside card — always visible */
   .card-img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block; position: absolute; inset: 0;
+  }
+
+  /* Done overlay — tick */
+  .card-done-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 4;
+    align-items: center; justify-content: center;
+  }
+  .card.done .card-done-overlay { display: flex; }
+  .card-done-overlay svg {
+    width: 36%; height: 36%; filter: drop-shadow(0 1px 3px rgba(0,0,0,.4));
+  }
+
+  /* ── IMAGE OVERLAY (zoom) ── */
+  #imgOverlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center;
+  }
+  #imgOverlay.show { display: flex; }
+  #imgOverlayWrap {
+    width: var(--stim-w); height: var(--stim-h);
+    border-radius: 10px; overflow: hidden;
+    border: 3px solid transparent;
+    animation: zoomIn .2s ease;
+  }
+  #imgOverlayWrap.red   { border-color: var(--red); }
+  #imgOverlayWrap.green { border-color: var(--green); }
+  #imgOverlayWrap.blue  { border-color: var(--blue); }
+  #imgOverlayImg {
     width: 100%; height: 100%; object-fit: cover; display: block;
-    opacity: 0; transition: opacity .3s ease; position: absolute; inset: 0;
   }
-  .card-img.revealed { opacity: 1; }
-
-  .card-cover {
-    position: absolute; inset: 0; background: var(--surface);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 2; transition: opacity .25s ease;
+  @keyframes zoomIn {
+    from { transform: scale(0.75); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
   }
-  .card-cover.hidden { opacity: 0; pointer-events: none; }
-  .card-num { display: none; }
 
-  /* ── VISTA QUESTIONÁRIO ── */
+  /* ── AGENCY ── */
   #viewAgency {
     display: none; min-height: 100vh;
     flex-direction: column; align-items: center; justify-content: center;
     padding: 48px 24px; background: var(--bg);
   }
   #viewAgency.show { display: flex; }
-
   .agency-wrap {
     width: 100%; max-width: 560px;
     background: var(--surface); border: 0.5px solid var(--border);
@@ -127,26 +140,26 @@
   #viewEnd.show { display: flex; }
   .end-title { font-size: 24px; font-weight: 300; }
   .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
-  .end-btn {
-    margin-top: 8px; padding: 14px 40px;
-    background: var(--text-primary); color: #fff;
-    border: none; border-radius: var(--radius);
-    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
-    cursor: pointer; letter-spacing: .02em; transition: background .15s;
-  }
-  .end-btn:hover { background: #333; }
 </style>
 </head>
 <body>
 
 <div class="progress-overlay"><span id="progressLabel">0 / 18</span></div>
-<div id="viewGrid" class="show">
+
+<div id="viewGrid">
   <div class="grid-container" id="grid"></div>
+</div>
+
+<!-- Image zoom overlay -->
+<div id="imgOverlay">
+  <div id="imgOverlayWrap">
+    <img id="imgOverlayImg" src="" alt="">
+  </div>
 </div>
 
 <div id="viewAgency">
   <div class="agency-wrap">
-    <div class="agency-counter" id="agencyCounter">Cartão 1 de 18</div>
+    <div class="agency-counter" id="agencyCounter">Imagem 1 de 18</div>
     <div class="agency-question">Até que ponto sentiu que teve controlo sobre a ação que acabou de realizar?</div>
     <div class="scale-row" id="scaleRow">
       <button class="scale-btn" onclick="submitAgency(1)">1</button>
@@ -170,27 +183,20 @@
 
 <div id="viewEnd">
   <div class="end-title">Tarefa concluída</div>
-  <div class="end-subtitle">Selecionou todos os 18 cartões.<br>Pode fechar esta janela.</div>
+  <div class="end-subtitle">Visualizou todas as imagens.<br>Pode fechar esta janela.</div>
 </div>
 
 <script>
-// Padrão xadrez: posição 0-17 na grelha (linha * 6 + coluna)
-// Linha 1 (pos 0-5):  H L H L H L
-// Linha 2 (pos 6-11): L H L H L H
-// Linha 3 (pos12-17): H L H L H L
 const AGENCY_PATTERN = [
-  'high','low','high','low','high','low',  // linha 1
-  'low','high','low','high','low','high',  // linha 2
-  'high','low','high','low','high','low'   // linha 3
+  'high','low','high','low','high','low',
+  'low','high','low','high','low','high',
+  'high','low','high','low','high','low'
 ];
 
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
-
-// Gera participant_id único por sessão (timestamp + random)
 const PARTICIPANT_ID = 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
 
 function sendToSheet(row) {
-  // Usa GET com parâmetros para contornar CORS
   const params = new URLSearchParams({
     timestamp:      row.ts_click,
     participant_id: PARTICIPANT_ID,
@@ -204,7 +210,6 @@ function sendToSheet(row) {
     agency_rating:  row.agency_rating,
     rt_ms:          row.ts_response - row.ts_click
   });
-  // Injected via image tag — contorna CORS completamente
   const img = new Image();
   img.src = SHEET_URL + '?' + params.toString();
 }
@@ -212,25 +217,26 @@ function sendToSheet(row) {
 const CONFIG = {
   lowDelayMin: 800,
   lowDelayMax: 1000,
+  zoomDuration: 1000, // 1 segundo de overlay
   images: [
-    { id:  1, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Animals_100_h.jpg', colour: 'green', category: 'nature',     position: 0  },
-    { id:  2, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_050_h.jpg', colour: 'red',   category: 'events',     position: 1  },
-    { id:  3, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_016_h.jpg', colour: 'green', category: 'gastronomy', position: 2  },
-    { id:  4, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_048_h.jpg', colour: 'blue',  category: 'gastronomy', position: 3  },
-    { id:  5, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_021_h.jpg', colour: 'red',   category: 'nature',     position: 4  },
-    { id:  6, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_234_h.jpg', colour: 'green', category: 'events',     position: 5  },
-    { id:  7, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_102_h.jpg', colour: 'blue',  category: 'nature',     position: 6  },
-    { id:  8, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_157_h.jpg', colour: 'green', category: 'nature',     position: 7  },
-    { id:  9, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_286_h.jpg', colour: 'blue',  category: 'events',     position: 8  },
-    { id: 10, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_046_h.jpg', colour: 'blue',  category: 'events',     position: 9  },
-    { id: 11, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_173_h.jpg', colour: 'blue',  category: 'nature',     position: 10 },
-    { id: 12, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_051_h.jpg', colour: 'green', category: 'gastronomy', position: 11 },
-    { id: 13, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_175_h.jpg', colour: 'green', category: 'events',     position: 12 },
-    { id: 14, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_062_h.jpg', colour: 'blue',  category: 'gastronomy', position: 13 },
-    { id: 15, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_180_h.jpg', colour: 'red',   category: 'nature',     position: 14 },
-    { id: 16, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_082_h.jpg', colour: 'red',   category: 'gastronomy', position: 15 },
-    { id: 17, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/People_067_h.jpg', colour: 'red',   category: 'gastronomy', position: 16 },
-    { id: 18, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_185_h.jpg', colour: 'red',   category: 'events',     position: 17 }
+    { id:  1, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Animals_100_h.jpg',       colour: 'green', category: 'nature',     position: 0  },
+    { id:  2, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_050_h.jpg',         colour: 'red',   category: 'events',     position: 1  },
+    { id:  3, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_016_h.jpg',   colour: 'green', category: 'gastronomy', position: 2  },
+    { id:  4, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_048_h.jpg',   colour: 'blue',  category: 'gastronomy', position: 3  },
+    { id:  5, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_021_h.jpg',    colour: 'red',   category: 'nature',     position: 4  },
+    { id:  6, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_234_h.jpg',         colour: 'green', category: 'events',     position: 5  },
+    { id:  7, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_102_h.jpg',    colour: 'blue',  category: 'nature',     position: 6  },
+    { id:  8, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_157_h.jpg',    colour: 'green', category: 'nature',     position: 7  },
+    { id:  9, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_286_h.jpg',         colour: 'blue',  category: 'events',     position: 8  },
+    { id: 10, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_046_h.jpg',        colour: 'blue',  category: 'events',     position: 9  },
+    { id: 11, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_173_h.jpg',    colour: 'blue',  category: 'nature',     position: 10 },
+    { id: 12, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_051_h.jpg',   colour: 'green', category: 'gastronomy', position: 11 },
+    { id: 13, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_175_h.jpg',        colour: 'green', category: 'events',     position: 12 },
+    { id: 14, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_062_h.jpg',   colour: 'blue',  category: 'gastronomy', position: 13 },
+    { id: 15, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_180_h.jpg',    colour: 'red',   category: 'nature',     position: 14 },
+    { id: 16, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_082_h.jpg',   colour: 'red',   category: 'gastronomy', position: 15 },
+    { id: 17, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/People_067_h.jpg',    colour: 'red',   category: 'gastronomy', position: 16 },
+    { id: 18, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_185_h.jpg',        colour: 'red',   category: 'events',     position: 17 }
   ]
 };
 
@@ -243,17 +249,18 @@ function buildGrid() {
     card.className = `card ${img.colour}`;
     card.id = `card-${img.id}`;
 
+    // Image always visible
     const im = document.createElement('img');
     im.className = 'card-img';
+    im.src = img.src;
     im.alt = '';
     card.appendChild(im);
 
-    const cover = document.createElement('div');
-    cover.className = 'card-cover';
-    cover.id = `cover-${img.id}`;
-    const num = document.createElement('span');
-    // card number removed
-    card.appendChild(cover);
+    // Done tick overlay
+    const doneOverlay = document.createElement('div');
+    doneOverlay.className = 'card-done-overlay';
+    doneOverlay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    card.appendChild(doneOverlay);
 
     card.addEventListener('click', () => onCardClick(img));
     grid.appendChild(card);
@@ -265,30 +272,42 @@ function onCardClick(img) {
   state.waiting = true;
   const tsClick = Date.now();
 
+  // Lock all cards
   document.querySelectorAll('.card').forEach(c => c.classList.add('locked'));
 
-  // Condição determinada pelo padrão xadrez da posição na grelha
   const condition = AGENCY_PATTERN[img.position];
   const delay = condition === 'low'
     ? Math.floor(Math.random() * (CONFIG.lowDelayMax - CONFIG.lowDelayMin + 1)) + CONFIG.lowDelayMin
     : 0;
 
-  setTimeout(() => {
-    const cardEl = document.getElementById(`card-${img.id}`);
-    const im = cardEl.querySelector('.card-img');
-    im.src = img.src;
-    im.onload = () => im.classList.add('revealed');
-    document.getElementById(`cover-${img.id}`).classList.add('hidden');
+  state.pendingMeta = { img, condition, delay, tsClick };
 
-    state.pendingMeta = { img, condition, delay, tsClick };
-    setTimeout(() => showAgency(), 600);
+  // After delay → show zoom overlay for 1 second
+  setTimeout(() => {
+    showZoomOverlay(img);
+    setTimeout(() => {
+      hideZoomOverlay();
+      showAgency();
+    }, CONFIG.zoomDuration);
   }, delay);
 }
 
+function showZoomOverlay(img) {
+  const wrap = document.getElementById('imgOverlayWrap');
+  wrap.className = img.colour; // applies border colour
+  document.getElementById('imgOverlayImg').src = img.src;
+  document.getElementById('imgOverlay').classList.add('show');
+}
+
+function hideZoomOverlay() {
+  document.getElementById('imgOverlay').classList.remove('show');
+  document.getElementById('imgOverlayImg').src = '';
+}
+
 function showAgency() {
-  document.getElementById('viewGrid').classList.remove('show');
+  document.getElementById('viewGrid').style.display = 'none';
   document.getElementById('agencyCounter').textContent =
-    `Cartão ${state.done.length + 1} de 18`;
+    `Imagem ${state.done.length + 1} de 18`;
   document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('viewAgency').classList.add('show');
 }
@@ -306,60 +325,53 @@ function submitAgency(rating) {
     category:      img.category,
     condition:     condition,
     delay_ms:      delay,
-    agency_rating: rating !== null ? rating : null,
+    agency_rating: rating,
     ts_click:      tsClick,
     ts_response:   Date.now()
   };
   state.responses.push(row);
   sendToSheet(row);
-
   state.done.push(img.id);
   state.waiting = false;
 
-  // ITI 500ms antes de voltar à grelha
+  // ITI 500ms → back to grid
   setTimeout(() => {
     document.getElementById('viewAgency').classList.remove('show');
+    document.getElementById('viewGrid').style.display = 'flex';
+
+    // Mark card as done with tick
     document.getElementById(`card-${img.id}`).classList.add('done');
     document.querySelectorAll('.card:not(.done)').forEach(c => c.classList.remove('locked'));
 
+    updateProgress();
+
     if (state.done.length === CONFIG.images.length) {
-      showEnd();
-    } else {
-      document.getElementById('viewGrid').classList.add('show');
-      updateProgress();
+      setTimeout(() => showEnd(), 300);
     }
-  }, 500); // ITI = 500ms conforme protocolo
+  }, 500);
 }
 
 function updateProgress() {
-  const n = state.done.length, total = CONFIG.images.length;
-  document.getElementById('progressFill').style.width = `${(n/total)*100}%`;
-  document.getElementById('progressLabel').textContent = `${n} / ${total}`;
+  document.getElementById('progressLabel').textContent =
+    `${state.done.length} / ${CONFIG.images.length}`;
 }
 
 function showEnd() {
-  document.getElementById("viewGrid").classList.remove("show");
-  document.getElementById("viewEnd").classList.add("show");
-
-  try { sessionStorage.setItem("encoding_responses", JSON.stringify(state.responses)); } catch(e) {}
+  document.getElementById('viewGrid').style.display = 'none';
+  document.getElementById('viewEnd').classList.add('show');
+  try { sessionStorage.setItem('encoding_responses', JSON.stringify(state.responses)); } catch(e) {}
 }
 
 function advanceStudy() {
-  // Tenta avançar o iMotions para o próximo segmento
   try {
-    if (window.iMotionsWebStudy?.endStimulus) {
-      window.iMotionsWebStudy.endStimulus();
-    } else if (window.parent?.iMotions?.endStimulus) {
-      window.parent.iMotions.endStimulus();
-    } else {
-      window.parent?.postMessage({ type: 'imotions_encoding_complete', data: state.responses }, '*');
-      window.parent?.postMessage('stimulus_complete', '*');
-    }
+    if (window.iMotionsWebStudy?.endStimulus) window.iMotionsWebStudy.endStimulus();
+    else if (window.parent?.iMotions?.endStimulus) window.parent.iMotions.endStimulus();
+    else window.parent?.postMessage('stimulus_complete', '*');
   } catch(e) {}
 }
 
 buildGrid();
-updateProgress();
 </script>
 </body>
 </html>
+
