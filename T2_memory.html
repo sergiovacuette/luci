@@ -31,7 +31,13 @@
   #viewStimulus { background: var(--bg); }
   .stimulus-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
   .stimulus-counter { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-hint); }
-  .stimulus-img-wrap { width: 320px; height: 240px; border-radius: 10px; overflow: hidden; border: 3px solid transparent; background: var(--surface); display: flex; align-items: center; justify-content: center; }
+  .stimulus-img-wrap {
+    width: min(calc(100vw - 80px), calc((100vh - 200px) * 4 / 3));
+    height: min(calc((100vw - 80px) * 3 / 4), calc(100vh - 200px));
+    border-radius: 10px; overflow: hidden;
+    border: 8px solid transparent; background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+  }
   .stimulus-img-wrap.red   { border-color: var(--red); }
   .stimulus-img-wrap.green { border-color: var(--green); }
   .stimulus-img-wrap.blue  { border-color: var(--blue); }
