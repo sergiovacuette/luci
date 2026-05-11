@@ -300,10 +300,10 @@ function runTrial() {
     ts_stim: Date.now()
   };
 
-  // Actualiza progresso
+  // Actualiza progresso  Imagem ${state.trialIdx + 1} de ${state.sequence.length}
   const pct = (state.trialIdx / state.sequence.length) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('stimCounter').textContent = `Imagem ${state.trialIdx + 1} de ${state.sequence.length}`;
+  document.getElementById('stimCounter').textContent = ``;
 
   // Mostra imagem
   const wrap = document.getElementById('stimImgWrap');
