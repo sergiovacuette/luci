@@ -329,7 +329,7 @@ function runTrial() {
 function showQ1() {
   showView('viewQuestion');
   state.trialData.ts_q1 = Date.now();
-  document.getElementById('qLabel').textContent = 'Reconhecimento';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Viu esta imagem na tarefa anterior?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -361,7 +361,7 @@ function showQ1() {
 }
 
 function showQ2() {
-  document.getElementById('qLabel').textContent = 'Posição espacial';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Onde estava localizada esta imagem na grelha da página inicial?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -386,7 +386,7 @@ function showQ2() {
 }
 
 function showQ3() {
-  document.getElementById('qLabel').textContent = 'Cor da moldura';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Qual era a cor da moldura desta imagem na página inicial?';
   renderOptions([
     { label: 'Vermelho', value: 'red' },
@@ -396,7 +396,7 @@ function showQ3() {
 }
 
 function showQ4() {
-  document.getElementById('qLabel').textContent = 'Categoria';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Esta imagem estava associada a que tipo de conteúdo?';
   renderOptions([
     { label: 'Gastronomia', value: 'gastronomy' },
@@ -406,7 +406,7 @@ function showQ4() {
 }
 
 function showQ5() {
-  document.getElementById('qLabel').textContent = 'Agência';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Quem abriu o cartão desta imagem?';
   renderOptions([
     { label: 'Fui eu (resposta imediata)',         value: 'self' },
@@ -415,7 +415,7 @@ function showQ5() {
 }
 
 function showQ6() {
-  document.getElementById('qLabel').textContent = 'Confiança';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Quão confiante está na sua resposta?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
