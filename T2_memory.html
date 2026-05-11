@@ -247,7 +247,7 @@ function runTrial() {
   };
   const pct = (state.trialIdx / state.sequence.length) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('stimCounter').textContent = `Imagem ${state.trialIdx + 1} de ${state.sequence.length}`;
+  document.getElementById('stimCounter').textContent = ``;
   const wrap = document.getElementById('stimImgWrap');
   wrap.className = `stimulus-img-wrap ${stim.colour}`;
   document.getElementById('stimImg').src = stim.src || '';
@@ -261,7 +261,7 @@ function runTrial() {
 function showQ1() {
   showView('viewQuestion');
   state.trialData.ts_q1 = Date.now();
-  document.getElementById('qLabel').textContent = 'Reconhecimento';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Viu esta imagem na sessão anterior?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -283,7 +283,7 @@ function showQ1() {
 }
 
 function showQ2() {
-  document.getElementById('qLabel').textContent = 'Posição espacial';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Onde estava localizada esta imagem na grelha da página inicial?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
@@ -308,28 +308,28 @@ function showQ2() {
 }
 
 function showQ3() {
-  document.getElementById('qLabel').textContent = 'Cor da moldura';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Qual era a cor da moldura desta imagem na página inicial?';
   renderOptions([{ label:'Vermelho', value:'red' }, { label:'Verde', value:'green' }, { label:'Azul', value:'blue' }],
     (val) => { state.trialData.q3 = val; showQ4(); }, 3000);
 }
 
 function showQ4() {
-  document.getElementById('qLabel').textContent = 'Categoria';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Esta imagem estava associada a que tipo de conteúdo?';
   renderOptions([{ label:'Gastronomia', value:'gastronomy' }, { label:'Natureza', value:'nature' }, { label:'Eventos', value:'events' }],
     (val) => { state.trialData.q4 = val; showQ5(); }, 3000);
 }
 
 function showQ5() {
-  document.getElementById('qLabel').textContent = 'Agência';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Quem abriu o cartão desta imagem?';
   renderOptions([{ label:'Fui eu', value:'self' }, { label:'Foi o sistema', value:'system' }],
     (val) => { state.trialData.q5 = val; showQ6(); }, 3000);
 }
 
 function showQ6() {
-  document.getElementById('qLabel').textContent = 'Confiança';
+  document.getElementById('qLabel').textContent = '';
   document.getElementById('qText').textContent = 'Quão confiante está na sua resposta?';
   const opts = document.getElementById('qOptions');
   opts.innerHTML = '';
