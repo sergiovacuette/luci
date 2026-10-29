@@ -236,7 +236,7 @@ const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_s
 // ID criado AQUI (início de cada participante) e guardado para o T1 o reutilizar (mesma origem github.io).
 // Se a página for aberta com ?pid=XXX, usa esse código.
 const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
-  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+  || 'P5_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
      + (new URLSearchParams(window.location.search).get('iMotionsRespondent') ? '_R' + new URLSearchParams(window.location.search).get('iMotionsRespondent') : '');
 try { localStorage.setItem('luci_pid', PARTICIPANT_ID); } catch (e) {}
 
@@ -273,9 +273,9 @@ function sendToSheet(row) {
 }
 
 const CONFIG = {
-  lowDelayMin: 800,
-  lowDelayMax: 1000,
-  zoomDuration: 2000, // 2 segundo de overlay
+  lowDelayMin: 1500,   // protocolo V5: atraso do controlo baixo 1,5–2 s
+  lowDelayMax: 2000,
+  zoomDuration: 6000,  // protocolo: janela de codificação de 6 s
   images: [
     { id:  1, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Animals_100_h.jpg',       colour: 'green', category: 'nature',     position: 0  },
     { id:  2, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_050_h.jpg',         colour: 'red',   category: 'events',     position: 1  },

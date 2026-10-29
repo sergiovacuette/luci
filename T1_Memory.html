@@ -61,6 +61,7 @@
     display: flex; align-items: center; justify-content: center;
   }
   .stimulus-img-wrap.red   { border-color: var(--red); }
+  .stimulus-img-wrap.grey  { border-color: #9e9e9e; }  /* protocolo V5: moldura neutra no teste */
   .stimulus-img-wrap.green { border-color: var(--green); }
   .stimulus-img-wrap.blue  { border-color: var(--blue); }
   .stimulus-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -239,7 +240,7 @@ const _stored = lsGet('luci_pid');
 // só reutiliza o ID da codificação se for do mesmo respondente iMotions (evita herdar o ID do participante anterior)
 const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
   || ((_stored && (!_IMR || _stored.endsWith('_R' + _IMR))) ? _stored : null)
-  || ('P_' + Date.now() + '_' + Math.random().toString(36).substr(2,5) + (_IMR ? '_R' + _IMR : ''));
+  || ('P5_' + Date.now() + '_' + Math.random().toString(36).substr(2,5) + (_IMR ? '_R' + _IMR : ''));
 // Envio robusto para o Google Sheet: fetch com keepalive (sobrevive ao fecho da janela), Image como recurso
 function beacon(url) {
   try { fetch(url, { mode: 'no-cors', keepalive: true }).catch(() => { new Image().src = url; }); }
@@ -355,7 +356,7 @@ function runTrial() {
 
   // Mostra imagem
   const wrap = document.getElementById('stimImgWrap');
-  wrap.className = `stimulus-img-wrap ${stim.colour}`;
+  wrap.className = 'stimulus-img-wrap grey';   // protocolo V5: moldura cinzenta neutra para OLD e LURE
   const img = document.getElementById('stimImg');
   img.src = stim.src || '';
 

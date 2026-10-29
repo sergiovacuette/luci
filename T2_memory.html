@@ -40,6 +40,7 @@
     display: flex; align-items: center; justify-content: center;
   }
   .stimulus-img-wrap.red   { border-color: var(--red); }
+  .stimulus-img-wrap.grey  { border-color: #9e9e9e; }  /* protocolo V5: moldura neutra no teste */
   .stimulus-img-wrap.green { border-color: var(--green); }
   .stimulus-img-wrap.blue  { border-color: var(--blue); }
   .stimulus-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -196,7 +197,7 @@ const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_s
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
   || lsGet('luci_pid')
-  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+  || 'P5_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
 // Envio robusto para o Google Sheet: fetch com keepalive (sobrevive ao fecho da janela), Image como recurso
 function beacon(url) {
   try { fetch(url, { mode: 'no-cors', keepalive: true }).catch(() => { new Image().src = url; }); }
@@ -294,7 +295,7 @@ function runTrial() {
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('stimCounter').textContent = ``;
   const wrap = document.getElementById('stimImgWrap');
-  wrap.className = `stimulus-img-wrap ${stim.colour}`;
+  wrap.className = 'stimulus-img-wrap grey';   // protocolo V5: moldura cinzenta neutra para OLD e LURE
   document.getElementById('stimImg').src = stim.src || '';
   const fill = document.getElementById('timerFill');
   fill.style.transition = 'none'; fill.style.width = '100%';
