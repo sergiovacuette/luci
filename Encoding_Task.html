@@ -191,14 +191,33 @@
 </div>
 
 <script>
-const AGENCY_PATTERN = [
+let AGENCY_PATTERN = [
   'high','low','high','low','high','low',
   'low','high','low','high','low','high',
   'high','low','high','low','high','low'
 ];
 
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
-const PARTICIPANT_ID = 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+// ID criado AQUI (início de cada participante) e guardado para o T1 o reutilizar (mesma origem github.io).
+// Se a página for aberta com ?pid=XXX, usa esse código.
+const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
+  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+try { localStorage.setItem('luci_pid', PARTICIPANT_ID); } catch (e) {}
+
+// Contrabalanceamento: true = baralha que cartões são high/low para cada participante (mantém 9/9).
+const COUNTERBALANCE = false;
+if (COUNTERBALANCE) {
+  for (let i = AGENCY_PATTERN.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [AGENCY_PATTERN[i], AGENCY_PATTERN[j]] = [AGENCY_PATTERN[j], AGENCY_PATTERN[i]];
+  }
+}
+// Envio robusto para o Google Sheet: fetch com keepalive (sobrevive ao fecho da janela), Image como recurso
+function beacon(url) {
+  try { fetch(url, { mode: 'no-cors', keepalive: true }).catch(() => { new Image().src = url; }); }
+  catch (e) { new Image().src = url; }
+}
+
 
 function sendToSheet(row) {
   const params = new URLSearchParams({
@@ -214,8 +233,7 @@ function sendToSheet(row) {
     agency_rating:  row.agency_rating,
     rt_ms:          row.ts_response - row.ts_click
   });
-  const img = new Image();
-  img.src = SHEET_URL + '?' + params.toString();
+  beacon(SHEET_URL + '?' + params.toString());
 }
 
 const CONFIG = {
@@ -317,7 +335,9 @@ function showAgency() {
 }
 
 function submitAgency(rating) {
+  if (!state.pendingMeta) return;            // ignora 2.º clique durante o ITI
   const { img, condition, delay, tsClick } = state.pendingMeta;
+  state.pendingMeta = null;
 
   document.querySelectorAll('.scale-btn')[rating-1].classList.add('selected');
 

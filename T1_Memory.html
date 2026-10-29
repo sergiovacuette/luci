@@ -198,7 +198,16 @@
 
 <script>
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
-const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid') || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
+  || lsGet('luci_pid')
+  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+// Envio robusto para o Google Sheet: fetch com keepalive (sobrevive ao fecho da janela), Image como recurso
+function beacon(url) {
+  try { fetch(url, { mode: 'no-cors', keepalive: true }).catch(() => { new Image().src = url; }); }
+  catch (e) { new Image().src = url; }
+}
+
 
 // ── ESTÍMULOS ──
 // OLD: as 18 imagens do encoding (mesmas cores e posições)
@@ -276,7 +285,7 @@ const state = {
   trialData: {},
   responses: [],
   stimulusTimer: null,
-  questionTimer: null
+  questionTimer: null, locked: true, qShownAt: 0
 };
 
 function startTest() {
@@ -345,6 +354,7 @@ function showQ1() {
     btn.className = 'option-btn';
     btn.textContent = o.label;
     btn.onclick = () => {
+      if (!accept()) return;
       state.trialData.q1 = o.value;
       state.trialData.rt_q1 = Date.now() - state.trialData.ts_q1;
       clearTimeout(state.questionTimer);
@@ -373,6 +383,7 @@ function showQ2() {
       const cell = document.createElement('div');
       cell.className = 'grid-cell';
       cell.onclick = () => {
+        if (!accept()) return;
         document.querySelectorAll('.grid-cell').forEach(x => x.classList.remove('selected'));
         cell.classList.add('selected');
         state.trialData.q2 = `${r},${c}`;
@@ -429,6 +440,7 @@ function showQ6() {
     btn.className = 'scale-btn';
     btn.textContent = i;
     btn.onclick = () => {
+      if (!accept()) return;
       state.trialData.q6 = i;
       state.trialData.rt_q6 = Date.now() - state.trialData.ts_q6;
       clearTimeout(state.questionTimer);
@@ -455,6 +467,7 @@ function renderOptions(options, onSelect, timeout) {
     btn.className = 'option-btn';
     btn.textContent = o.label;
     btn.onclick = () => {
+      if (!accept()) return;
       clearTimeout(state.questionTimer);
       onSelect(o.value);
     };
@@ -464,7 +477,21 @@ function renderOptions(options, onSelect, timeout) {
   startQuestionTimer(timeout, () => onSelect(null));
 }
 
+// ── Uma única resposta por pergunta ──
+// state.locked fica true assim que há clique ou timeout; só volta a false quando a pergunta seguinte arranca.
+// Cliques nos primeiros MIN_RT_MS após a pergunta aparecer são ignorados (evita cliques "arrastados" da pergunta anterior).
+const MIN_RT_MS = 150;
+function accept() {
+  if (state.locked) return false;
+  if (performance.now() - state.qShownAt < MIN_RT_MS) return false;
+  state.locked = true;
+  clearTimeout(state.questionTimer);
+  return true;
+}
+
 function startQuestionTimer(ms, onTimeout) {
+  state.locked = false;
+  state.qShownAt = performance.now();
   const fill = document.getElementById('timeoutFill');
   fill.style.transition = 'none';
   fill.style.width = '100%';
@@ -473,10 +500,12 @@ function startQuestionTimer(ms, onTimeout) {
     fill.style.width = '0%';
   }, 30);
   clearTimeout(state.questionTimer);
-  state.questionTimer = setTimeout(onTimeout, ms);
+  state.questionTimer = setTimeout(() => { if (state.locked) return; state.locked = true; onTimeout(); }, ms);
 }
 
 function finishTrial() {
+  state.locked = true;
+  document.getElementById('qOptions').innerHTML = '';
   sendToSheet(state.trialData);
   state.responses.push({ ...state.trialData });
   state.trialIdx++;
@@ -504,8 +533,7 @@ function sendToSheet(d) {
     rt_q1:          d.rt_q1 || '',
     rt_q6:          d.rt_q6 || ''
   });
-  const img = new Image();
-  img.src = SHEET_URL + '?' + params.toString();
+  beacon(SHEET_URL + '?' + params.toString());
 }
 
 function showView(id) {
