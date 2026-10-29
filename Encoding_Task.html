@@ -144,6 +144,14 @@
   #viewEnd.show { display: flex; }
   .end-title { font-size: 24px; font-weight: 300; }
   .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ── Aviso de regresso ao iMotions ── */
+  .im-help { margin-top: 24px; max-width: 520px; width: 100%; text-align: left; background: #fff8e1; border: 2px solid #f0b400; border-radius: 10px; padding: 20px 24px; font-size: 15px; line-height: 1.6; color: #1a1916; }
+  .im-help h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: #b00020; }
+  .im-help ol { padding-left: 20px; }
+  .im-help li { margin-bottom: 6px; }
+  .im-help .im-close { margin-top: 14px; width: 100%; padding: 14px; border: none; border-radius: 6px; background: #1a1916; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .im-help .im-fallback { display: none; margin-top: 10px; font-size: 13px; color: #b00020; }
 </style>
 </head>
 <body>
@@ -187,7 +195,18 @@
 
 <div id="viewEnd">
   <div class="end-title">Tarefa concluída</div>
-  <div class="end-subtitle">Visualizou todas as imagens.<br>Pode fechar esta janela.</div>
+  <div class="end-subtitle">Visualizou todas as imagens.</div>
+  <div class="im-help" id="imHelp" style="display:none">
+    <h3>⚠ Ainda não terminou — não feche o browser!</h3>
+    <ol>
+      <li>Feche <strong>apenas este separador</strong> (botão abaixo ou o <strong>×</strong> deste separador).</li>
+      <li>No separador do <strong>iMotions</strong>, carregue em <strong>«Continue test»</strong>.</li>
+      <li><strong>Não</strong> carregue em <strong>«Parar partilha»</strong> / «Stop sharing».</li>
+      <li>Só pode fechar o browser quando o iMotions mostrar <em>«We have finished recording and saving your data»</em>.</li>
+    </ol>
+    <button class="im-close" onclick="closeAndReturn()">Fechar este separador e voltar ao iMotions</button>
+    <div class="im-fallback" id="imFallback">O browser não deixou fechar automaticamente: feche este separador no <strong>×</strong> lá em cima e volte ao separador do iMotions.</div>
+  </div>
 </div>
 
 <script>
@@ -197,11 +216,28 @@ let AGENCY_PATTERN = [
   'high','low','high','low','high','low'
 ];
 
+
+// ── Regresso ao iMotions ──
+const IM_RESP = new URLSearchParams(window.location.search).get('iMotionsRespondent');
+let TASK_DONE = false;
+window.addEventListener('beforeunload', e => { if (!TASK_DONE) { e.preventDefault(); e.returnValue = ''; } });
+function showImHelp() {
+  TASK_DONE = true;
+  const h = document.getElementById('imHelp');
+  if (h && IM_RESP) h.style.display = 'block';
+}
+function closeAndReturn() {
+  try { if (window.opener) window.opener.focus(); } catch (e) {}
+  window.close();
+  setTimeout(() => { document.getElementById('imFallback').style.display = 'block'; }, 400);
+}
+
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
 // ID criado AQUI (início de cada participante) e guardado para o T1 o reutilizar (mesma origem github.io).
 // Se a página for aberta com ?pid=XXX, usa esse código.
 const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
-  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+     + (new URLSearchParams(window.location.search).get('iMotionsRespondent') ? '_R' + new URLSearchParams(window.location.search).get('iMotionsRespondent') : '');
 try { localStorage.setItem('luci_pid', PARTICIPANT_ID); } catch (e) {}
 
 // Contrabalanceamento: true = baralha que cartões são high/low para cada participante (mantém 9/9).
@@ -383,6 +419,7 @@ function updateProgress() {
 function showEnd() {
   document.getElementById('viewGrid').style.display = 'none';
   document.getElementById('viewEnd').classList.add('show');
+  showImHelp();
   try { sessionStorage.setItem('encoding_responses', JSON.stringify(state.responses)); } catch(e) {}
 }
 
