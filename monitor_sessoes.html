@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Estudo Memória — Monitor de sessões</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--txt:#1d2330;--mut:#6b7280;--line:#e5e7eb;
+        --ok:#16a34a;--okbg:#dcfce7;--warn:#b45309;--warnbg:#fef3c7;--bad:#dc2626;--badbg:#fee2e2;
+        --info:#2563eb;--infobg:#dbeafe;--bar:#2563eb}
+  @media (prefers-color-scheme: dark){:root{--bg:#0f1115;--card:#171a21;--txt:#e5e7eb;--mut:#9ca3af;--line:#2a2f3a;
+        --okbg:#0f2e1a;--warnbg:#3a2a06;--badbg:#3a1010;--infobg:#0f2240;--bar:#60a5fa}}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+  header{padding:16px 20px;background:var(--card);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  h1{font-size:18px;margin:0}
+  .sub{color:var(--mut);font-size:13px}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi b{display:block;font-size:28px;line-height:1.1}
+  .kpi span{color:var(--mut);font-size:13px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:16px;overflow:hidden}
+  section h2{font-size:15px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  tr:last-child td{border-bottom:none}
+  .bar{display:inline-block;width:120px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle;margin-right:8px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--bar)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
+  .ok{background:var(--okbg);color:var(--ok)} .warn{background:var(--warnbg);color:var(--warn)}
+  .bad{background:var(--badbg);color:var(--bad)} .info{background:var(--infobg);color:var(--info)}
+  .muted{color:var(--mut)} .empty{padding:14px;color:var(--mut)}
+  .err{background:var(--badbg);color:var(--bad);padding:10px 14px;border-radius:8px;margin-bottom:12px;display:none}
+  footer{color:var(--mut);font-size:12px;text-align:center;padding:8px 16px 24px}
+  .alerta{display:none;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:14px;border:1px solid}
+  .alerta.bad{display:block;border-color:var(--bad)} .alerta.warn{display:block;border-color:var(--warn)}
+  .alerta b{font-size:15px} .alerta ul{margin:6px 0 0;padding:0;list-style:none} .alerta li{margin:3px 0}
+  .alerta button{float:right;margin-left:8px}
+  .pisca{animation:pisca 1s ease-in-out 6}
+  @keyframes pisca{50%{opacity:.35}}
+  button{font:inherit;font-size:13px;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--txt);cursor:pointer}
+  button.on{background:var(--okbg);color:var(--ok);border-color:var(--ok)}
+  .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  label{font-size:13px;color:var(--mut)} input[type=date]{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--txt)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Estudo Memória — Monitor de sessões</h1>
+    <div class="sub" id="upd">A carregar…</div>
+  </div>
+  <div class="ctl">
+    <button id="btnAlerta" title="Som e notificação quando alguém pára a meio">🔕 Ativar alertas</button>
+    <label>Dia: <input type="date" id="dia"></label>
+  </div>
+</header>
+<main>
+  <div class="err" id="err"></div>
+  <div class="alerta" id="alerta"></div>
+  <div class="kpis">
+    <div class="kpi"><b id="k1">–</b><span>A fazer agora</span></div>
+    <div class="kpi"><b id="k2">–</b><span>Pararam a meio</span></div>
+    <div class="kpi"><b id="k3">–</b><span>Sessão 1 concluída</span></div>
+    <div class="kpi"><b id="k4">–</b><span>Sessão 2 concluída</span></div>
+    <div class="kpi"><b id="k5">–</b><span>Podem fazer o T2 agora</span></div>
+  </div>
+  <section><h2>A fazer agora</h2><div class="tw" id="t_ativos"></div></section>
+  <section><h2>Pararam a meio</h2><div class="tw" id="t_parados"></div></section>
+  <section><h2>Concluídos</h2><div class="tw" id="t_feitos"></div></section>
+  <section><h2>Janela da Sessão 2 (T2: entre 24 h e 48 h após o fim do T1)</h2><div class="tw" id="t_janela"></div></section>
+</main>
+<footer>
+  Atualiza sozinho a cada 30 s. Com os alertas ligados, toca um som e aparece uma notificação quando alguém fica sem registos há mais de 4 min (aviso) ou mais de 10 min (parou a meio) — deixe este separador aberto. Os dados vêm das respostas gravadas pela tarefa; o envio para o iMotions não aparece aqui — confirmar no iMotions no fim de cada sessão.
+</footer>
+
+<script>
+/* ===================== Configuração ===================== */
+const SHEET_ID   = "1hGbuA8eG8SO1Spdb9ReaPDGbDJDGEyYUqsVo7CzFe2Y";
+const FOLHAS     = {enc:"Folha1", t1:"T1_Responses", t2:"T2_Responses"};
+const TOTAL      = {enc:18, t1:36, t2:36};
+const PREFIXO    = "P5_";
+const ATIVO_MIN  = 3;    // sem registos há ≤ 3 min → "a fazer"
+const PARADO_MIN = 10;   // > 10 min sem registos → "parou a meio"
+const MIN_TESTE  = 33;   // T1/T2 com ≥ 33 ensaios que deixou de gravar → concluído
+const JANELA_H   = [24, 48];
+const INTERVALO  = 30;   // segundos
+const AVISO_MIN  = 4;    // 1.º aviso (suave): sem registos há > 4 min a meio de uma fase
+
+/* Parâmetros opcionais no endereço: ?dia=AAAA-MM-DD  &agora=AAAA-MM-DDTHH:MM (simulação) */
+const qs = new URLSearchParams(location.search);
+const AGORA_FIXO = qs.get("agora") ? new Date(qs.get("agora")) : null;
+const diaInput = document.getElementById("dia");
+
+function lisboa(d, opt){ return d.toLocaleString("pt-PT", Object.assign({timeZone:"Europe/Lisbon"}, opt)); }
+function diaLisboa(d){ const p = new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Lisbon",year:"numeric",month:"2-digit",day:"2-digit"}).format(d); return p; }
+function agora(){ return AGORA_FIXO || new Date(); }
+diaInput.value = qs.get("dia") || diaLisboa(agora());
+diaInput.addEventListener("change", render);
+
+/* ===================== Leitura (JSONP do Google Sheets) ===================== */
+let seq = 0;
+function lerFolha(nome){
+  return new Promise((resolve, reject) => {
+    const cb = "__gv_" + (++seq) + "_" + Date.now();
+    const s = document.createElement("script");
+    const t = setTimeout(() => { cleanup(); reject(new Error("Sem resposta do Google Sheets (" + nome + ")")); }, 20000);
+    function cleanup(){ clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb] = (resp) => {
+      cleanup();
+      if (resp.status === "error") return reject(new Error((resp.errors && resp.errors[0] && resp.errors[0].detailed_message) || "Erro a ler " + nome));
+      resolve(resp.table.rows.map(r => (r.c || []).map(c => c ? c.v : null)));
+    };
+    s.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?headers=0&sheet=${encodeURIComponent(nome)}` +
+            `&tqx=out:json;responseHandler:${cb}&_=${Date.now()}`;
+    s.onerror = () => { cleanup(); reject(new Error("Não foi possível contactar o Google Sheets")); };
+    document.head.appendChild(s);
+  });
+}
+
+/* A coluna da hora vem como texto ISO ("2026-11-19T21:07:37.680Z"); se o Sheets a tiver
+   convertido em data, o gviz devolve "Date(2026,10,19,21,7,37,680)" (valores em UTC). */
+function paraData(v){
+  if (v == null) return null;
+  const s = String(v);
+  const m = s.match(/^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+)(?:,(\d+))?)?\)$/);
+  if (m) return new Date(Date.UTC(+m[1], +m[2], +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0), +(m[7]||0)));
+  return new Date(s);
+}
+
+function normalizar(linhas, colItem, colEnsaio){
+  const out = [];
+  for (const r of linhas){
+    const pid = r[1] == null ? "" : String(r[1]).trim();
+    if (!pid.startsWith(PREFIXO)) continue;
+    const ts = paraData(r[0]);
+    if (!ts || isNaN(ts)) continue;
+    const m = pid.match(/_R(\d+)$/); if (!m) continue;
+    out.push({ts, resp:m[1], item:r[colItem], ensaio: colEnsaio==null ? null : Number(r[colEnsaio])});
+  }
+  return out;
+}
+
+let DADOS = null, ULTIMA = null, ERRO = null;
+async function atualizar(){
+  try{
+    const [e, a, b] = await Promise.all([lerFolha(FOLHAS.enc), lerFolha(FOLHAS.t1), lerFolha(FOLHAS.t2)]);
+    DADOS = { enc: normalizar(e, 2, null), t1: normalizar(a, 3, 2), t2: normalizar(b, 3, 2) };
+    if (AGORA_FIXO) for (const k in DADOS) DADOS[k] = DADOS[k].filter(x => x.ts <= AGORA_FIXO);
+    ULTIMA = new Date(); ERRO = null;
+  }catch(ex){ ERRO = ex.message; }
+  render();
+}
+
+/* ===================== Lógica ===================== */
+function resumo(regs, total){
+  const g = {};
+  for (const x of regs){
+    const o = g[x.resp] || (g[x.resp] = {itens:new Set(), maxE:0, ini:x.ts, fim:x.ts});
+    o.itens.add(String(x.item)); if (x.ensaio > o.maxE) o.maxE = x.ensaio;
+    if (x.ts < o.ini) o.ini = x.ts; if (x.ts > o.fim) o.fim = x.ts;
+  }
+  for (const k in g){ const o = g[k]; o.n = o.itens.size; o.completo = o.n >= total || o.maxE >= total; }
+  return g;
+}
+
+function calcular(){
+  const now = agora();
+  const R = {enc:resumo(DADOS.enc, TOTAL.enc), t1:resumo(DADOS.t1, TOTAL.t1), t2:resumo(DADOS.t2, TOTAL.t2)};
+  const ids = new Set([...Object.keys(R.enc), ...Object.keys(R.t1), ...Object.keys(R.t2)]);
+  const lista = [];
+  for (const id of ids){
+    let melhor = null;
+    for (const f of ["enc","t1","t2"]) if (R[f][id] && (!melhor || R[f][id].fim > melhor.o.fim)) melhor = {f, o:R[f][id]};
+    const {f, o} = melhor;
+    const min = (now - o.fim) / 60000;
+    let completo = o.completo;
+    if (f !== "enc" && !completo && o.n >= MIN_TESTE && min > ATIVO_MIN) completo = true;
+    let sit, cls;
+    if (f === "enc" && completo) { [sit, cls] = min > PARADO_MIN ? ["Encoding feito, T1 não começou","bad"] : ["Encoding feito → a passar ao T1","ok"]; }
+    else if (f === "t1" && completo) [sit, cls] = ["Sessão 1 concluída","info"];
+    else if (f === "t2" && completo) [sit, cls] = ["Sessão 2 concluída","info"];
+    else if (min <= ATIVO_MIN) [sit, cls] = ["A fazer","ok"];
+    else if (min <= PARADO_MIN) [sit, cls] = ["Sem registos há alguns minutos","warn"];
+    else [sit, cls] = ["Parou a meio","bad"];
+    const t1 = R.t1[id];
+    const t1ok = t1 && (t1.completo || (t1.n >= MIN_TESTE && (now - t1.fim)/60000 > ATIVO_MIN));
+    lista.push({id, fase:f, n:o.n, total:TOTAL[f], fim:o.fim, min, sit, cls, t1fim:t1 && t1.fim, t1ok, temT2: !!R.t2[id]});
+  }
+  return lista;
+}
+
+/* ===================== Apresentação ===================== */
+const NOME = {enc:"Encoding", t1:"T1 (memória)", t2:"T2 (sessão 2)"};
+function tempo(m){ m = Math.max(0, Math.round(m)); if (m < 60) return m + " min"; let h = Math.floor(m/60); m %= 60;
+  if (h < 24) return `${h} h ${String(m).padStart(2,"0")} min`; const d = Math.floor(h/24); return `${d} d ${h%24} h`; }
+function hora(d){ return lisboa(d, {hour:"2-digit", minute:"2-digit", second:"2-digit"}); }
+function dh(d){ return lisboa(d, {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"}); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function tabela(rows){
+  if (!rows.length) return '<div class="empty">Ninguém neste momento.</div>';
+  rows.sort((a,b) => b.fim - a.fim);
+  return `<table><thead><tr><th>Resp.</th><th>Fase</th><th>Progresso</th><th>Último registo</th><th>Há</th><th>Situação</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td><b>R${esc(r.id)}</b></td><td>${NOME[r.fase]}</td>
+      <td><span class="bar"><i style="width:${Math.min(100, 100*r.n/r.total)}%"></i></span>${r.n}/${r.total}</td>
+      <td>${hora(r.fim)}</td><td class="muted">${tempo(r.min)}</td>
+      <td><span class="pill ${r.cls}">${r.sit}</span></td></tr>`).join("") + "</tbody></table>";
+}
+
+function render(){
+  const errBox = document.getElementById("err");
+  errBox.style.display = ERRO ? "block" : "none";
+  errBox.textContent = ERRO ? "⚠ " + ERRO + (DADOS ? " — a mostrar os últimos dados obtidos." : " — confirme que a folha está partilhada como 'Qualquer pessoa com o link: Leitor'.") : "";
+  if (!DADOS) return;
+  const now = agora(), dia = diaInput.value;
+  const lista = calcular();
+  verificarAlertas(lista);
+  const doDia = lista.filter(r => diaLisboa(r.fim) === dia);
+  const ativos  = doDia.filter(r => ["A fazer","Sem registos há alguns minutos","Encoding feito → a passar ao T1"].includes(r.sit));
+  const parados = doDia.filter(r => ["Parou a meio","Encoding feito, T1 não começou"].includes(r.sit));
+  const feitos  = doDia.filter(r => r.sit.startsWith("Sessão"));
+
+  const jan = lista.filter(r => r.t1ok && !r.temT2).map(r => {
+    const abre = new Date(r.t1fim.getTime() + JANELA_H[0]*3600e3), fecha = new Date(r.t1fim.getTime() + JANELA_H[1]*3600e3);
+    const est = now < abre ? ["Ainda não pode","warn"] : now <= fecha ? ["PODE FAZER AGORA","ok"] : ["Fora da janela","bad"];
+    return {...r, abre, fecha, est};
+  }).filter(r => r.est[0] !== "Fora da janela" || (now - r.fecha) < 24*3600e3)   // mostra os que saíram há < 24 h
+    .sort((a,b) => a.abre - b.abre);
+
+  document.getElementById("k1").textContent = ativos.length;
+  document.getElementById("k2").textContent = parados.length;
+  document.getElementById("k3").textContent = feitos.filter(r => r.fase === "t1").length;
+  document.getElementById("k4").textContent = feitos.filter(r => r.fase === "t2").length;
+  document.getElementById("k5").textContent = jan.filter(r => r.est[0] === "PODE FAZER AGORA").length;
+
+  document.getElementById("t_ativos").innerHTML  = tabela(ativos);
+  document.getElementById("t_parados").innerHTML = tabela(parados);
+  document.getElementById("t_feitos").innerHTML  = tabela(feitos);
+  document.getElementById("t_janela").innerHTML  = jan.length ?
+    `<table><thead><tr><th>Resp.</th><th>Fim do T1</th><th>Abre</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>` +
+    jan.map(r => `<tr><td><b>R${esc(r.id)}</b></td><td>${dh(r.t1fim)}</td><td>${dh(r.abre)}</td><td>${dh(r.fecha)}</td>
+      <td><span class="pill ${r.est[1]}">${r.est[0]}</span></td></tr>`).join("") + "</tbody></table>"
+    : '<div class="empty">Ninguém à espera do T2.</div>';
+
+  document.getElementById("upd").textContent =
+    (AGORA_FIXO ? "SIMULAÇÃO — " : "") + "Atualizado às " + lisboa(AGORA_FIXO || ULTIMA || now, {hour:"2-digit", minute:"2-digit", second:"2-digit"}) +
+    " · dia " + dia.split("-").reverse().join("/");
+}
+
+/* ===================== Alertas ===================== */
+const btn = document.getElementById("btnAlerta"), caixa = document.getElementById("alerta");
+const TITULO = document.title;
+let alertasOn = false, audio = null, jaAvisados = new Map(), ignorados = new Set(), primeira = true;
+try { alertasOn = localStorage.getItem("monitor_alertas") === "1"; } catch(e){}
+function guardar(){ try { localStorage.setItem("monitor_alertas", alertasOn ? "1" : "0"); } catch(e){} }
+function desenharBotao(){
+  btn.textContent = alertasOn ? "🔔 Alertas ligados" : "🔕 Ativar alertas";
+  btn.classList.toggle("on", alertasOn);
+}
+function prepararAudio(){
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === "suspended") audio.resume(); } catch(e){}
+}
+btn.addEventListener("click", async () => {
+  alertasOn = !alertasOn; guardar(); desenharBotao();
+  if (alertasOn){
+    prepararAudio(); bip("warn");
+    if ("Notification" in window && Notification.permission === "default") { try { await Notification.requestPermission(); } catch(e){} }
+  }
+});
+// o browser só deixa tocar som depois de um clique na página
+document.addEventListener("click", () => { if (alertasOn) prepararAudio(); }, {once:false});
+desenharBotao();
+
+function bip(nivel){
+  if (!alertasOn || !audio) return;
+  const notas = nivel === "bad" ? [880, 660, 880, 660] : [660];
+  notas.forEach((f, i) => {
+    const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + i * 0.28;
+    o.frequency.value = f; o.type = "sine";
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 0.25);
+  });
+}
+function notificar(titulo, corpo){
+  if (!alertasOn || !("Notification" in window) || Notification.permission !== "granted") return;
+  try { const n = new Notification(titulo, {body: corpo, tag: "monitor-" + titulo, renotify: true}); n.onclick = () => { window.focus(); n.close(); }; } catch(e){}
+}
+
+/* Nível de alerta de cada participante de hoje que está a meio de uma fase */
+function nivelAlerta(r){
+  if (r.sit === "Parou a meio" || r.sit === "Encoding feito, T1 não começou") return "bad";
+  if (r.sit === "Sem registos há alguns minutos" && r.min > AVISO_MIN) return "warn";
+  return null;
+}
+function texto(r){
+  const fase = r.sit === "Encoding feito, T1 não começou" ? "terminou o Encoding mas não começou o T1"
+             : `parado no ${NOME[r.fase]} (${r.n}/${r.total})`;
+  return `R${r.id} — ${fase}, sem registos há ${tempo(r.min)}`;
+}
+function verificarAlertas(lista){
+  const hoje = diaLisboa(agora());
+  const atuais = lista.filter(r => diaLisboa(r.fim) === hoje).map(r => ({...r, nivel: nivelAlerta(r)})).filter(r => r.nivel);
+  // limpar quem voltou a gravar ou concluiu
+  const ids = new Set(atuais.map(r => r.id));
+  for (const id of [...jaAvisados.keys()]) if (!ids.has(id)) { jaAvisados.delete(id); ignorados.delete(id); }
+  // novos alertas (ou subida de aviso → parado)
+  const novos = atuais.filter(r => jaAvisados.get(r.id) !== r.nivel && !(jaAvisados.get(r.id) === "bad"));
+  for (const r of atuais) if (jaAvisados.get(r.id) !== "bad") jaAvisados.set(r.id, r.nivel);
+  if (novos.length && !primeira){
+    const pior = novos.some(r => r.nivel === "bad") ? "bad" : "warn";
+    bip(pior);
+    notificar(pior === "bad" ? "⚠ Participante parou a meio" : "Participante sem registos", novos.map(texto).join("\n"));
+    novos.forEach(r => ignorados.delete(r.id));
+    caixa.classList.remove("pisca"); void caixa.offsetWidth; caixa.classList.add("pisca");
+  }
+  primeira = false;
+  // caixa no topo
+  const visiveis = atuais.filter(r => !ignorados.has(r.id)).sort((a,b) => (a.nivel === "bad" ? 0 : 1) - (b.nivel === "bad" ? 0 : 1) || b.min - a.min);
+  const nBad = visiveis.filter(r => r.nivel === "bad").length;
+  caixa.className = "alerta" + (visiveis.length ? (nBad ? " bad" : " warn") : "") + (caixa.classList.contains("pisca") ? " pisca" : "");
+  caixa.style.background = nBad ? "var(--badbg)" : "var(--warnbg)";
+  caixa.innerHTML = visiveis.length ?
+    `<button id="btnOk">Visto</button><b>${nBad ? "⚠ Atenção: " + nBad + " participante(s) parou/pararam a meio" : "Participante(s) sem registos há alguns minutos"}</b>` +
+    `<ul>${visiveis.map(r => `<li><span class="pill ${r.nivel}">${r.nivel === "bad" ? "Parou" : "Aviso"}</span> ${esc(texto(r))}</li>`).join("")}</ul>` +
+    `<div class="muted" style="margin-top:6px;font-size:12px">Verificar se a tarefa fechou, se o separador da tarefa ficou aberto ou se a internet caiu.</div>` : "";
+  const ok = document.getElementById("btnOk");
+  if (ok) ok.onclick = () => { visiveis.forEach(r => ignorados.add(r.id)); verificarAlertas(lista); };
+  document.title = (nBad ? `(${nBad}) ⚠ ` : visiveis.length ? "(!) " : "") + TITULO;
+}
+
+atualizar();
+setInterval(atualizar, INTERVALO * 1000);
+setInterval(render, 15000);   // atualiza os "há X min" entre leituras
+</script>
+</body>
+</html>
