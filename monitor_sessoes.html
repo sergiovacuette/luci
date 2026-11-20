@@ -248,7 +248,7 @@ function render(){
     : '<div class="empty">Ninguém à espera do T2.</div>';
 
   document.getElementById("upd").textContent =
-    (AGORA_FIXO ? "SIMULAÇÃO — " : "") + "Atualizado às " + lisboa(AGORA_FIXO || ULTIMA || now, {hour:"2-digit", minute:"2-digit", second:"2-digit"}) +
+    (AGORA_FIXO ? "SIMULAÇÃO — " : "") + (TESTE ? "MODO TESTE — " : "") + "Atualizado às " + lisboa(AGORA_FIXO || ULTIMA || now, {hour:"2-digit", minute:"2-digit", second:"2-digit"}) +
     " · dia " + dia.split("-").reverse().join("/");
 }
 
@@ -302,7 +302,11 @@ function texto(r){
              : `parado no ${NOME[r.fase]} (${r.n}/${r.total})`;
   return `R${r.id} — ${fase}, sem registos há ${tempo(r.min)}`;
 }
+/* Modo de teste: ?teste no endereço → aos 10 s aparece um participante fictício R9999 parado */
+const TESTE = qs.has("teste"); let testeAtivo = false;
+if (TESTE) setTimeout(() => { testeAtivo = true; render(); }, 10000);
 function verificarAlertas(lista){
+  if (testeAtivo) lista = lista.concat([{id:"9999 (TESTE)", fase:"t1", n:12, total:36, fim:new Date(agora() - 11*60000), min:11, sit:"Parou a meio", cls:"bad"}]);
   const hoje = diaLisboa(agora());
   const atuais = lista.filter(r => diaLisboa(r.fim) === hoje).map(r => ({...r, nivel: nivelAlerta(r)})).filter(r => r.nivel);
   // limpar quem voltou a gravar ou concluiu
