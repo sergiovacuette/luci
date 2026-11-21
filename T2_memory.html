@@ -270,7 +270,17 @@ const STIMULI = {
   ]
 };
 
+// Gera a sequência garantindo que nunca há 3 do mesmo tipo seguidos E que entram todos os 36 estímulos.
+// A versão anterior parava quando só restavam estímulos de um tipo e a regra impedia o próximo —
+// por isso ~42% dos participantes viam só 30–35 ensaios (os "últimos ensaios em falta").
 function pseudoRandomize(olds, lures) {
+  for (let tentativa = 0; tentativa < 1000; tentativa++) {
+    const seq = pseudoRandomizeTentativa(olds, lures);
+    if (seq.length === olds.length + lures.length) return seq;
+  }
+  return pseudoRandomizeTentativa(olds, lures);   // nunca deve chegar aqui
+}
+function pseudoRandomizeTentativa(olds, lures) {
   const old = [...olds].sort(() => Math.random() - 0.5);
   const lure = [...lures].sort(() => Math.random() - 0.5);
   const seq = [];
