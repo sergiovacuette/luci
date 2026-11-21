@@ -144,6 +144,14 @@
   #viewEnd.show { display: flex; }
   .end-title { font-size: 24px; font-weight: 300; }
   .end-subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ── Aviso de regresso ao iMotions ── */
+  .im-help { margin-top: 24px; max-width: 520px; width: 100%; text-align: left; background: #fff8e1; border: 2px solid #f0b400; border-radius: 10px; padding: 20px 24px; font-size: 15px; line-height: 1.6; color: #1a1916; }
+  .im-help h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: #b00020; }
+  .im-help ol { padding-left: 20px; }
+  .im-help li { margin-bottom: 6px; }
+  .im-help .im-close { margin-top: 14px; width: 100%; padding: 14px; border: none; border-radius: 6px; background: #1a1916; color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; font-family: inherit; }
+  .im-help .im-fallback { display: none; margin-top: 10px; font-size: 13px; color: #b00020; }
 </style>
 </head>
 <body>
@@ -187,21 +195,51 @@
 
 <div id="viewEnd">
   <div class="end-title">Tarefa concluída</div>
-  <div class="end-subtitle">Visualizou todas as imagens.<br>Pode fechar esta janela.</div>
+  <div class="end-subtitle">Visualizou todas as imagens.</div>
+  <div class="end-subtitle" id="saveWait" style="display:none"><strong>A guardar as últimas respostas… não feche esta janela.</strong><br><span id="saveWaitN"></span></div>
+  <div class="im-help" id="imHelp" style="display:none">
+    <h3>⚠ Ainda não terminou — não feche o browser!</h3>
+    <ol>
+      <li>Feche <strong>apenas este separador</strong> (botão abaixo ou o <strong>×</strong> deste separador).</li>
+      <li>No separador do <strong>iMotions</strong>, carregue em <strong>«Continuar teste»</strong>.</li>
+      <li><strong>Não</strong> carregue em <strong>«Parar partilha»</strong>.</li>
+      <li>Só pode fechar o browser quando o iMotions mostrar <em>«Concluímos a gravação e o armazenamento dos seus dados.»</em></li>
+    </ol>
+    <button class="im-close" onclick="closeAndReturn()">Fechar este separador e voltar ao iMotions</button>
+    <div class="im-fallback" id="imFallback">O browser não deixou fechar automaticamente: feche este separador no <strong>×</strong> lá em cima e volte ao separador do iMotions.</div>
+  </div>
 </div>
 
 <script>
+// Protocolo V5, Tabela 2 e Figura 2: posições, categorias e cores; cada combinação categoria × cor tem 1 cartão de controlo alto e 1 de controlo baixo
 let AGENCY_PATTERN = [
   'high','low','high','low','high','low',
   'low','high','low','high','low','high',
   'high','low','high','low','high','low'
 ];
 
+
+// ── Regresso ao iMotions ──
+const IM_RESP = new URLSearchParams(window.location.search).get('iMotionsRespondent');
+let TASK_DONE = false;
+window.addEventListener('beforeunload', e => { if (!TASK_DONE || (typeof PENDENTES !== 'undefined' && PENDENTES.size)) { e.preventDefault(); e.returnValue = ''; } });
+function showImHelp() {
+  TASK_DONE = true;
+  const h = document.getElementById('imHelp');
+  if (h && IM_RESP) h.style.display = 'block';
+}
+function closeAndReturn() {
+  try { if (window.opener) window.opener.focus(); } catch (e) {}
+  window.close();
+  setTimeout(() => { document.getElementById('imFallback').style.display = 'block'; }, 400);
+}
+
 const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwvQ-1Zfyr4uTaCAjhJ_si9qIvGnjbVxIlOdJUbB7G1JGKxvmokuWKy5_CtGG5S7c-9/exec';
 // ID criado AQUI (início de cada participante) e guardado para o T1 o reutilizar (mesma origem github.io).
 // Se a página for aberta com ?pid=XXX, usa esse código.
 const PARTICIPANT_ID = new URLSearchParams(window.location.search).get('pid')
-  || 'P_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  || 'P5_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+     + (new URLSearchParams(window.location.search).get('iMotionsRespondent') ? '_R' + new URLSearchParams(window.location.search).get('iMotionsRespondent') : '');
 try { localStorage.setItem('luci_pid', PARTICIPANT_ID); } catch (e) {}
 
 // Contrabalanceamento: true = baralha que cartões são high/low para cada participante (mantém 9/9).
@@ -213,9 +251,30 @@ if (COUNTERBALANCE) {
   }
 }
 // Envio robusto para o Google Sheet: fetch com keepalive (sobrevive ao fecho da janela), Image como recurso
-function beacon(url) {
-  try { fetch(url, { mode: 'no-cors', keepalive: true }).catch(() => { new Image().src = url; }); }
-  catch (e) { new Image().src = url; }
+// Envio com confirmação: cada pedido fica em PENDENTES até o Apps Script responder (pode demorar 30 s ou mais);
+// se falhar, tenta de novo até 4 vezes. O ecrã final só deixa fechar quando PENDENTES estiver vazio —
+// antes, quem fechava logo perdia os últimos ensaios.
+const PENDENTES = new Set();
+function beacon(url, tentativa = 0) {
+  let p;
+  try {
+    p = fetch(url, { mode: 'no-cors', keepalive: true, cache: 'no-store' })
+      .catch(() => new Promise(r => setTimeout(r, 2000 * (tentativa + 1)))
+        .then(() => tentativa < 3 ? beacon(url, tentativa + 1) : (new Image().src = url)));
+  } catch (e) { new Image().src = url; return Promise.resolve(); }
+  PENDENTES.add(p);
+  p.finally(() => PENDENTES.delete(p));
+  return p;
+}
+async function esperarEnvios(maxMs = 120000) {
+  const t0 = Date.now();
+  const box = document.getElementById('saveWait'), n = document.getElementById('saveWaitN');
+  if (PENDENTES.size && box) box.style.display = 'block';
+  while (PENDENTES.size && Date.now() - t0 < maxMs) {
+    if (n) n.textContent = `(${PENDENTES.size} resposta${PENDENTES.size > 1 ? 's' : ''} a enviar)`;
+    await Promise.race([Promise.allSettled([...PENDENTES]), new Promise(r => setTimeout(r, 1000))]);
+  }
+  if (box) box.style.display = 'none';
 }
 
 
@@ -237,28 +296,28 @@ function sendToSheet(row) {
 }
 
 const CONFIG = {
-  lowDelayMin: 800,
-  lowDelayMax: 1000,
-  zoomDuration: 2000, // 2 segundo de overlay
+  lowDelayMin: 1500,   // protocolo V5: atraso do controlo baixo 1,5–2 s
+  lowDelayMax: 2000,
+  zoomDuration: 6000,  // protocolo: janela de codificação de 6 s
   images: [
-    { id:  1, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Animals_100_h.jpg',       colour: 'green', category: 'nature',     position: 0  },
-    { id:  2, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_050_h.jpg',         colour: 'red',   category: 'events',     position: 1  },
-    { id:  3, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_016_h.jpg',   colour: 'green', category: 'gastronomy', position: 2  },
-    { id:  4, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_048_h.jpg',   colour: 'blue',  category: 'gastronomy', position: 3  },
-    { id:  5, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_021_h.jpg',    colour: 'red',   category: 'nature',     position: 4  },
-    { id:  6, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_234_h.jpg',         colour: 'green', category: 'events',     position: 5  },
-    { id:  7, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_102_h.jpg',    colour: 'blue',  category: 'nature',     position: 6  },
-    { id:  8, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_157_h.jpg',    colour: 'green', category: 'nature',     position: 7  },
-    { id:  9, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_286_h.jpg',         colour: 'blue',  category: 'events',     position: 8  },
-    { id: 10, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_046_h.jpg',        colour: 'blue',  category: 'events',     position: 9  },
-    { id: 11, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_173_h.jpg',    colour: 'blue',  category: 'nature',     position: 10 },
-    { id: 12, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_051_h.jpg',   colour: 'green', category: 'gastronomy', position: 11 },
-    { id: 13, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_175_h.jpg',        colour: 'green', category: 'events',     position: 12 },
-    { id: 14, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_062_h.jpg',   colour: 'blue',  category: 'gastronomy', position: 13 },
-    { id: 15, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_180_h.jpg',    colour: 'red',   category: 'nature',     position: 14 },
-    { id: 16, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_082_h.jpg',   colour: 'red',   category: 'gastronomy', position: 15 },
-    { id: 17, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/People_067_h.jpg',    colour: 'red',   category: 'gastronomy', position: 16 },
-    { id: 18, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_185_h.jpg',        colour: 'red',   category: 'events',     position: 17 }
+    { id:  1, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_016_h.jpg', colour: 'red', category: 'gastronomy', position: 0 },
+    { id:  2, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Animals_100_h.jpg', colour: 'green', category: 'nature', position: 1 },
+    { id:  3, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_050_h.jpg', colour: 'red', category: 'events', position: 2 },
+    { id:  4, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_048_h.jpg', colour: 'green', category: 'gastronomy', position: 3 },
+    { id:  5, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_021_h.jpg', colour: 'blue', category: 'nature', position: 4 },
+    { id:  6, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_234_h.jpg', colour: 'blue', category: 'events', position: 5 },
+    { id:  7, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/Faces_286_h.jpg', colour: 'green', category: 'events', position: 6 },
+    { id:  8, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_051_h.jpg', colour: 'blue', category: 'gastronomy', position: 7 },
+    { id:  9, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_102_h.jpg', colour: 'red', category: 'nature', position: 8 },
+    { id: 10, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_046_h.jpg', colour: 'blue', category: 'events', position: 9 },
+    { id: 11, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_062_h.jpg', colour: 'red', category: 'gastronomy', position: 10 },
+    { id: 12, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_157_h.jpg', colour: 'green', category: 'nature', position: 11 },
+    { id: 13, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_173_h.jpg', colour: 'red', category: 'nature', position: 12 },
+    { id: 14, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_175_h.jpg', colour: 'red', category: 'events', position: 13 },
+    { id: 15, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/Objects_082_h.jpg', colour: 'green', category: 'gastronomy', position: 14 },
+    { id: 16, src: 'https://sergiovacuette.github.io/luci/images/Nature/Encoding/Landscapes_180_h.jpg', colour: 'blue', category: 'nature', position: 15 },
+    { id: 17, src: 'https://sergiovacuette.github.io/luci/images/Events/Encoding/People_185_h.jpg', colour: 'green', category: 'events', position: 16 },
+    { id: 18, src: 'https://sergiovacuette.github.io/luci/images/Gastronomy/Encoding/People_067_h.jpg', colour: 'blue', category: 'gastronomy', position: 17 }
   ]
 };
 
@@ -380,9 +439,11 @@ function updateProgress() {
     `${state.done.length} / ${CONFIG.images.length}`;
 }
 
-function showEnd() {
+async function showEnd() {
   document.getElementById('viewGrid').style.display = 'none';
   document.getElementById('viewEnd').classList.add('show');
+  await esperarEnvios();
+  showImHelp();
   try { sessionStorage.setItem('encoding_responses', JSON.stringify(state.responses)); } catch(e) {}
 }
 
